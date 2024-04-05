@@ -58,12 +58,21 @@ jobs:
         run: cmake --version
 
       - name: Install conan dependencies
-        run: conan install . -of ${{ github.workspace }}/build -pr:a profiles/profile_${{ matrix.os }}_${{ matrix.architecture }}_Release.conf
+        run: conan install . -of build -pr:a profiles/profile_${{ matrix.os }}_${{ matrix.architecture }}_Release.conf
+
+      - name: Print debug info
+        run: |
+          echo "Conan path: ${{ github.workspace }}/build"
+          echo "Node-API headers: ${{ github.workspace }}/node_modules/node-api-headers"
+          echo "Toolchain file: ${{ github.workspace }}/build/conan_toolchain.cmake"
+          ls -la ${{ github.workspace }}/build
+          ls -la ${{ github.workspace }}/node_modules/node-api-headers
+          ls -la ${{ github.workspace }}/build/conan_toolchain.cmake
 
       - name: Configure CMake
         shell: bash
         run: |
-          cmake -B ${{ github.workspace }}/build \
+          cmake -B build \
             -S js \
             -DCMAKE_BUILD_TYPE=Release \
             -DCONAN_PATH=${{ github.workspace }}/build \
