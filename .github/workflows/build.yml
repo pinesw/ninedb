@@ -38,9 +38,19 @@ jobs:
           echo "Architecture: ${{ matrix.architecture }}"
           echo "Operating System: ${{ matrix.os }}"
 
-      - name: List files
-        run: |
-          ls -la
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+          cache: 'pip' # caching pip dependencies
+
+      - name: Install Conan
+        id: conan
+        uses: turtlebrowser/get-conan@main
+        with:
+          version: 2.1.0
+
+      - name: Conan version
+        run: echo "${{ steps.conan.outputs.version }}"
 
       # - name: Install packages
       #   run: npm install
