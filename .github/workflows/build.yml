@@ -67,7 +67,7 @@ jobs:
             -S js \
             -DCMAKE_BUILD_TYPE=Release \
             -DCONAN_PATH=${{ github.workspace }}/build \
-            -DNODE_API_HEADERS=node_modules/node-api-headers \
+            -DNODE_API_HEADERS=${{ github.workspace }}/node_modules/node-api-headers \
             -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/build/conan_toolchain.cmake
 
       - name: Build
