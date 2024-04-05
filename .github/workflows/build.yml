@@ -33,6 +33,9 @@ jobs:
           node-version: ${{ matrix.node }}
           architecture: ${{ matrix.architecture }}
 
+      - name: Install Node.js dependencies
+        run: npm install
+
       - name: Print info
         run: |
           echo "Node.js version: ${{ matrix.node }}"
@@ -60,14 +63,14 @@ jobs:
       - name: Install conan dependencies
         run: conan install . -of build -pr:a profiles/profile_${{ matrix.os }}_${{ matrix.architecture }}_Release.conf
 
-      - name: Print debug info
-        run: |
-          echo "Conan path: ${{ github.workspace }}/build"
-          echo "Node-API headers: ${{ github.workspace }}/node_modules/node-api-headers"
-          echo "Toolchain file: ${{ github.workspace }}/build/conan_toolchain.cmake"
-          ls -la ${{ github.workspace }}/build
-          ls -la ${{ github.workspace }}/node_modules/node-api-headers
-          ls -la ${{ github.workspace }}/build/conan_toolchain.cmake
+      # - name: Print debug info
+      #   run: |
+      #     echo "Conan path: ${{ github.workspace }}/build"
+      #     echo "Node-API headers: ${{ github.workspace }}/node_modules/node-api-headers"
+      #     echo "Toolchain file: ${{ github.workspace }}/build/conan_toolchain.cmake"
+      #     ls -la ${{ github.workspace }}/build
+      #     ls -la ${{ github.workspace }}/node_modules/node-api-headers
+      #     ls -la ${{ github.workspace }}/build/conan_toolchain.cmake
 
       - name: Configure CMake
         shell: bash
