@@ -51,19 +51,14 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.14
         with:
-          cmake-version: '3.20.x'
+          cmake-version: "3.20.x"
 
       - name: Print cmake version
         run: cmake --version
 
-      # - name: Install Conan
-      #   id: conan
-      #   uses: turtlebrowser/get-conan@main
-      #   with:
-      #     version: 2.1.0
-
-      # - name: Conan version
-      #   run: echo "${{ steps.conan.outputs.version }}"
+      - name: Install conan dependencies
+        run: conan install . -of build --build=missing
+        # conan install . -pr:b profiles/profile_build.conf -pr:h profiles/profile_${config_name}.conf -of ${config_name} --build=missing
 
       # - name: Install packages
       #   run: npm install
