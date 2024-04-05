@@ -48,16 +48,28 @@ jobs:
       - name: Print Conan version
         run: conan --version
 
-      - name: Setup cmake
+      - name: Setup CMake
         uses: jwlawson/actions-setup-cmake@v1.14
         with:
           cmake-version: "3.29.x"
 
-      - name: Print cmake version
+      - name: Print CMake version
         run: cmake --version
 
       - name: Install conan dependencies
         run: conan install . -of build -pr:a profiles/profile_${{ matrix.os }}_${{ matrix.architecture }}_Release.conf
+
+      - name: Configure CMake
+        run: |
+          cmake -B build \
+            -S js \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCONAN_PATH=build \
+            -DNODE_API_HEADERS=node_modules/node-api-headers \
+            -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake
+
+      - name: Build
+        run: cmake --build build
 
       # - name: Install packages
       #   run: npm install
