@@ -57,8 +57,7 @@ jobs:
         run: cmake --version
 
       - name: Install conan dependencies
-        run: conan install . -of build --build=missing
-        # conan install . -pr:b profiles/profile_build.conf -pr:h profiles/profile_${config_name}.conf -of ${config_name} --build=missing
+        run: conan install . -of build -pr:a profiles/profile_${{ matrix.os }}_${{ matrix.architecture }}_Release.conf --build=missing
 
       # - name: Install packages
       #   run: npm install
