@@ -1,0 +1,59 @@
+name: Build bindings for release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node:
+          # - 18
+          - 20
+
+        architecture:
+          - x64
+          # - x86
+
+        os:
+          - ubuntu-20.04
+          - windows-2019
+          # - macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          architecture: ${{ matrix.architecture }}
+
+      - name: Print info
+        run: |
+          echo "Node.js version: ${{ matrix.node }}"
+          echo "Architecture: ${{ matrix.architecture }}"
+          echo "Operating System: ${{ matrix.os }}"
+
+      - name: List files
+        run: |
+          ls -la
+
+      # - name: Install packages
+      #   run: npm install
+      #   env:
+      #     SKIP_SASS_BINARY_DOWNLOAD_FOR_CI: true
+
+      # - name: Run tests
+      #   run: npm test
+
+      # - uses: actions/upload-artifact@v3
+      #   if: github.repository_owner == 'sass' && github.event_name != 'pull_request'
+      #   with:
+      #     name: ${{ matrix.node }}-${{ matrix.architecture }}
+      #     path: |
+      #       vendor/**/binding.node
+      #       build/Release/binding.pdb

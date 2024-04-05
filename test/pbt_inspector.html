@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>PBT inspector</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+
+    <script src="https://unpkg.com/lz4@0.6.5/build/lz4.js"></script>
+</head>
+
+<body>
+
+    <div>
+        <div style="display: flex;">
+            <div>
+                <canvas id="canvas" width="500" height="500"></canvas>
+            </div>
+            <div>
+                <input id="inp-file" type="file" />
+            </div>
+        </div>
+        <div>
+            <div>
+                <input type="checkbox" id="chk-hex-mode" />
+                <label for="chk-hex-mode">Hex mode</label>
+
+                <input type="checkbox" id="chk-bbox-mode" />
+                <label for="chk-bbox-mode">BBox mode</label>
+            </div>
+            <div>
+                <pre id="pre-hover-status"></pre>
+            </div>
+            <pre id="pre-tree-info"></pre>
+        </div>
+    </div>
+
+    <script>
+        const LZ4 = require('lz4');
+        const Buffer = require('buffer').Buffer
+
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        const inpFile = document.getElementById('inp-file');
+        const preTreeInfo = document.getElementById('pre-tree-info');
+        const preHoverStatus = document.getElementById('pre-hover-status');
+        const chkHexMode = document.getElementById('chk-hex-mode');
+        const chkBBoxMode = document.getElementById('chk-bbox-mode');
+
+        inpFile.addEventListener('change', handleFileChange);
+        chkHexMode.addEventListener('change', handleHexModeChange);
+        chkBBoxMode.addEventListener('change', handleBBoxModeChange);
+        canvas.addEventListener('mousemove', handleCanvasMouseMove);
+
+        const state = {
+            meta: null,
+            tree: null,
+            hexMode: chkHexMode.checked,
+            bboxMode: chkBBoxMode.checked,
+            highlightBBoxes: null,
+        };
+
+        function pointToIndex(point, order = 16) {
+            const n = 2 ** order;
+            let index = 0;
+            for (let s = n / 2; s > 0; s = Math.floor(s / 2)) {
+                const rx = (point.x & s) > 0 ? 1 : 0;
+                const ry = (point.y & s) > 0 ? 1 : 0;
+                index += s * s * ((3 * rx) ^ ry);
+                this.rotate(point, rx, ry, n);
+            }
+            return index;
+        }
+
+        function rotate(point, rx, ry, n) {
+            if (ry !== 0) {
+                return;
+            }
+            if (rx === 1) {
+                point.x = n - 1 - point.x;
+                point.y = n - 1 - point.y;
+            }
+            [point.x, point.y] = [point.y, point.x];
+        }
+
+        function intersects(r1, r2) {
+            return r2.x0 <= r1.x1
+                && r2.x1 >= r1.x0
+                && r2.y0 <= r1.y1
+                && r2.y1 >= r1.y0;
+        }
+
+        function bboxSearch(node, bbox, acc = [], debug = null) {
+            const bboxes = getBBoxes(node);
+            if (debug) {
+                debug.nodesVisited += 1;
+                debug.entriesVisited += bboxes.length;
+            }
+            for (let i = 0; i < bboxes.length; i++) {
+                if (intersects(bboxes[i], bbox)) {
+                    if (node.children) {
+                        bboxSearch(node.children[i], bbox, acc, debug);
+                    } else {
+                        acc.push({ stem: node.stem, bbox: bboxes[i], suffix: node.suffixes[i], value: node.values[i] });
+                    }
+                }
+            }
+            return acc;
+        }
+
+        function handleCanvasMouseMove(event) {
+            const x = event.offsetX;
+            const y = event.offsetY;
+            const debug = { nodesVisited: 0, entriesVisited: 0 };
+
+            let matches = null;
+            if (state.tree && state.bboxMode) {
+                matches = bboxSearch(state.tree, { x0: x, y0: y, x1: x, y1: y }, [], debug);
+            }
+
+            const words = [
+                `Mouse position: ${x}, ${y}`,
+                `Mouse H-value: ${pointToIndex({ x, y })}`,
+                `Nodes visited: ${debug.nodesVisited}`,
+                `Entries visited: ${debug.entriesVisited}`,
+            ];
+
+            if (matches) {
+                words.push(`Matches: ${matches.length}`);
+                words.push(...matches.map((x) => `${printStemAndSuffix(x.stem, x.suffix)} => ${printBBox(x.value)}`));
+                state.highlightBBoxes = matches.map((x) => x.bbox);
+            } else {
+                state.highlightBBoxes = null;
+            }
+
+            preHoverStatus.innerText = words.join('; ');
+            // handleUpdate();
+        }
+
+        async function handleFileChange(event) {
+            const file = inpFile.files[0];
+
+            const reader = new FileReader();
+            const promise = new Promise((resolve, reject) => {
+                reader.addEventListener('load', resolve);
+                reader.addEventListener('error', reject);
+            });
+            reader.readAsArrayBuffer(file);
+            await promise;
+            const view = new DataView(reader.result);
+
+            state.meta = readFooter(view);
+            state.tree = readTree(view, state.meta);
+
+            handleUpdate();
+        }
+
+        function handleHexModeChange(event) {
+            state.hexMode = event.target.checked;
+            handleUpdate();
+        }
+
+        function handleBBoxModeChange(event) {
+            state.bboxMode = event.target.checked;
+            handleUpdate();
+        }
+
+        function handleUpdate() {
+            if (!state.meta || !state.tree) {
+                return;
+            }
+
+            const info = [
+                printMeta(state.meta),
+                printValidation(state.meta, state.tree, state.meta.treeHeight),
+                ...printTree(state.meta, state.tree, state.meta.treeHeight)
+            ];
+            preTreeInfo.innerText = info.join('\n');
+            drawBBoxes(state.tree, state.highlightBBoxes);
+        }
+
+        const colors = ['#000da0', '#3d109b', '#691991', '#902884', '#a9357a', '#b43b76', '#be4171', '#c9476c', '#d34d67', '#dd5362'];
+
+        function drawBBoxes(tree, highlightBBoxes) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (state.bboxMode) {
+                drawBBoxesNode(tree);
+                drawBBoxesHighlight(highlightBBoxes);
+            }
+        }
+
+        function getBBoxes(tree) {
+            let bboxes;
+            if (tree.children) {
+                bboxes = tree.reducedValues;
+            } else {
+                bboxes = tree.values;
+            }
+
+            bboxes = bboxes.map((x) => {
+                const dv = new DataView(x);
+                const x0 = dv.getInt32(0, true);
+                const y0 = dv.getInt32(4, true);
+                const x1 = dv.getInt32(8, true);
+                const y1 = dv.getInt32(12, true);
+                return { x0, y0, x1, y1 };
+            });
+
+            return bboxes;
+        }
+
+        function drawBBoxesNode(tree, level = 0) {
+            if (tree.children) {
+                for (const child of tree.children) {
+                    drawBBoxesNode(child, level + 1);
+                }
+            }
+
+            const bboxes = getBBoxes(tree);
+            ctx.strokeStyle = colors[level];
+            ctx.beginPath();
+            for (const bbox of bboxes) {
+                ctx.rect(bbox.x0, bbox.y0, bbox.x1 - bbox.x0, bbox.y1 - bbox.y0);
+            }
+            ctx.stroke();
+        }
+
+        function drawBBoxesHighlight(highlightBBoxes) {
+            if (!highlightBBoxes) {
+                return;
+            }
+
+            ctx.strokeStyle = '#ff0000';
+            ctx.beginPath();
+            for (const bbox of highlightBBoxes) {
+                ctx.rect(bbox.x0, bbox.y0, bbox.x1 - bbox.x0, bbox.y1 - bbox.y0);
+            }
+            ctx.stroke();
+        }
+
+        function readVarInt(view, offset) {
+            let value = 0;
+            let length = 0;
+            let currentByte;
+
+            while (true) {
+                currentByte = view.getUint8(offset++);
+                value |= (currentByte & 0x7F) << (length * 7);
+                length += 1;
+                if (length > 5) {
+                    throw new Error('VarInt exceeds allowed bounds.');
+                }
+                if ((currentByte & 0x80) != 0x80) {
+                    break;
+                }
+            }
+            return { value, length };
+        }
+
+        function readString(view, offset) {
+            const length = readVarInt(view, offset);
+            offset += length.length;
+            const value = view.buffer.slice(offset, offset + length.value);
+            offset += length.value;
+            return { value, length: length.length + length.value, valueLength: length.value };
+        }
+
+        function readFooter(view) {
+            const sizeofFooter = 41;
+            const offset = view.byteLength - sizeofFooter;
+            return {
+                rootOffset: Number(view.getBigUint64(offset, true)),
+                level0End: Number(view.getBigUint64(offset + 8, true)),
+                treeHeight: Number(view.getBigUint64(offset + 16, true)),
+                numEntries: Number(view.getBigInt64(offset + 24, true)),
+                compression: Number(view.getUint8(offset + 32)),
+                versionMajor: Number(view.getUint16(offset + 33, true)),
+                versionMinor: Number(view.getUint16(offset + 35, true)),
+                magic: Number(view.getUint32(offset + 37, true)),
+            };
+        }
+
+        function readTree(view, meta, offset = state.meta.rootOffset, height = state.meta.treeHeight) {
+            let nodeView;
+            if (meta.compression) {
+                const compressedSize = readVarInt(view, offset);
+                offset += compressedSize.length;
+                const uncompressedSize = readVarInt(view, offset);
+                offset += uncompressedSize.length;
+                const input = Buffer.from(view.buffer, offset, compressedSize.value);
+                const output = Buffer.alloc(uncompressedSize.value);
+                LZ4.decodeBlock(input, output);
+                nodeView = new DataView(output.buffer);
+                offset = 0;
+            } else {
+                nodeView = view;
+            }
+
+            const numChildren = readVarInt(nodeView, offset);
+            offset += numChildren.length;
+
+            const { value: stem, length: stemByteLength, valueLength: stemLength } = readString(nodeView, offset);
+            offset += stemByteLength;
+
+            const node = {
+                numChildren: numChildren.value,
+                stemLength,
+                stem
+            };
+
+            if (height === 1) {
+                node.suffixes = [];
+                node.values = [];
+
+                for (let i = 0; i < numChildren.value; i++) {
+                    const { value: suffix, length: suffixLength } = readString(nodeView, offset);
+                    offset += suffixLength;
+
+                    const { value, length: valueLength } = readString(nodeView, offset);
+                    offset += valueLength;
+
+                    node.suffixes.push(suffix);
+                    node.values.push(value);
+                }
+            } else {
+                node.suffixes = [];
+                node.reducedValues = [];
+                node.offsets = [];
+                node.numEntries = [];
+                node.children = [];
+
+                for (let i = 0; i < numChildren.value; i++) {
+                    const { value: suffix, length: suffixLength } = readString(nodeView, offset);
+                    offset += suffixLength;
+
+                    const { value: reducedValue, length: reducedValueLength } = readString(nodeView, offset);
+                    offset += reducedValueLength;
+
+                    const childOffset = Number(nodeView.getBigUint64(offset, true));
+                    offset += 8;
+
+                    const { length: numEntriesLength, value: numEntries } = readVarInt(nodeView, offset);
+                    offset += numEntriesLength;
+
+                    node.suffixes.push(suffix);
+                    node.reducedValues.push(reducedValue);
+                    node.offsets.push(childOffset);
+                    node.numEntries.push(numEntries);
+                }
+
+                const { value: suffix, length: suffixLength } = readString(nodeView, offset);
+                offset += suffixLength;
+
+                node.suffixes.push(suffix);
+
+                for (let i = 0; i < numChildren.value; i++) {
+                    node.children.push(readTree(view, meta, node.offsets[i], height - 1));
+                }
+            }
+
+            return node;
+        }
+
+        function printMeta(meta) {
+            const words = [
+                `rootOffset=${meta.rootOffset}`,
+                `level0End=${meta.level0End}`,
+                `treeHeight=${meta.treeHeight}`,
+                `numEntries=${meta.numEntries}`,
+            ];
+            return words.join('; ');
+        }
+
+        function printString(string) {
+            if (state.hexMode) {
+                return [...new Uint8Array(string)].map((x) => x.toString(16).padStart(2, '0')).join(' ');
+            } else {
+                return new TextDecoder().decode(string);
+            }
+        }
+
+        function printStemAndSuffix(stem, suffix) {
+            return printString(stem) + ' ' + printString(suffix);
+        }
+
+        function printBBox(string) {
+            const dv = new DataView(string);
+            const x0 = dv.getInt32(0, true);
+            const y0 = dv.getInt32(4, true);
+            const x1 = dv.getInt32(8, true);
+            const y1 = dv.getInt32(12, true);
+            return `{x0=${x0}, y0=${y0}, x1=${x1}, y1=${y1}}`;
+        }
+
+        function printValue(string) {
+            if (state.bboxMode) {
+                return printBBox(string);
+            } else {
+                return printString(string);
+            }
+        }
+
+        function validateSortedOrder(meta, tree, height) {
+            for (let i = 1; i < tree.suffixes.length; i++) {
+                if (indexedDB.cmp(tree.suffixes[i - 1], tree.suffixes[i]) > 0) {
+                    return false;
+                }
+            }
+            if (height >= 2) {
+                for (let i = 0; i < tree.children.length; i++) {
+                    if (!validateSortedOrder(meta, tree.children[i], height - 1)) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function printValidation(meta, tree, height) {
+            const words = [
+                `sortedOrder=${validateSortedOrder(meta, tree, height)}`,
+            ];
+            return words.join('; ');
+        }
+
+        function printTree(meta, tree, height) {
+            const words = [
+                `numChildren=${tree.numChildren}`,
+                `stemLength=${tree.stemLength}`,
+                `stem=${printString(tree.stem)}`,
+            ];
+            if (height === 1) {
+                words.push(
+                    `suffixes=[${tree.suffixes.map(printString).join(', ')}]`,
+                    `values=[${tree.values.map(printValue).join(', ')}]`,
+                );
+            } else {
+                words.push(
+                    `suffixes=[${tree.suffixes.map(printString).join(', ')}]`,
+                    `reducedValues=[${tree.reducedValues.map(printValue).join(', ')}]`,
+                    `offsets=[${tree.offsets.join(', ')}]`,
+                    `numEntries=[${tree.numEntries.join(', ')}]`,
+                );
+            }
+            let lines = [
+                ('  ').repeat(meta.treeHeight - height) + words.join('; ')
+            ];
+            if (height >= 2) {
+                lines = lines.concat(tree.children.map((child) => printTree(meta, child, height - 1)));
+            }
+            return lines.flat();
+        }
+    </script>
+</body>
+
+</html>

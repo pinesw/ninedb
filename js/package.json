@@ -1,0 +1,23 @@
+{
+  "name": "ninedb",
+  "version": "0.1.0",
+  "main": "./binding.ts",
+  "scripts": {
+    "install": "node-pre-gyp install --fallback-to-build"
+  },
+  "dependencies": {
+    "@mapbox/node-pre-gyp": "^1.0.11"
+  },
+  "devDependencies": {
+    "aws-sdk": "^2.1584.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.3"
+  },
+  "binary": {
+    "module_name": "ninedb",
+    "module_path": "./lib/binding/{configuration}/{node_abi}-{platform}-{arch}/",
+    "remote_path": "./{module_name}/v{version}/{configuration}/",
+    "package_name": "{module_name}-v{version}-{node_abi}-{platform}-{arch}.tar.gz",
+    "host": "https://ninedb.s3-us-west-1.amazonaws.com"
+  }
+}

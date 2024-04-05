@@ -1,0 +1,13 @@
+[requires]
+boost/1.81.0
+lz4/1.9.4
+nlohmann_json/3.11.3
+tracy/0.10
+
+[generators]
+CMakeDeps
+CMakeToolchain
+
+[options]
+*:shared=False
+boost/*:header_only=True
