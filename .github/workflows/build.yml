@@ -43,6 +43,8 @@ jobs:
           python-version: "3.9"
           cache: "pip" # caching pip dependencies
 
+      - run: pip install -r requirements.txt
+
       - name: Print Conan version
         run: conan --version
 
