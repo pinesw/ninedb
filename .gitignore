@@ -61,5 +61,6 @@
 *.svclog
 *.scc
 
+build/
 conan_build/
 *.db
