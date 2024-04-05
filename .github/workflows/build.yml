@@ -29,6 +29,7 @@ jobs:
       - name: Setup Node.js environment
         uses: actions/setup-node@v4
         with:
+          cache: "npm"
           node-version: ${{ matrix.node }}
           architecture: ${{ matrix.architecture }}
 
@@ -60,6 +61,7 @@ jobs:
         run: conan install . -of ${{ github.workspace }}/build -pr:a profiles/profile_${{ matrix.os }}_${{ matrix.architecture }}_Release.conf
 
       - name: Configure CMake
+        shell: bash
         run: |
           cmake -B ${{ github.workspace }}/build \
             -S js \

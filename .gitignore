@@ -62,5 +62,6 @@
 *.scc
 
 build/
+node_modules/
 conan_build/
 *.db

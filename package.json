@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "node-api-headers": "^1.1.0"
+  }
+}
