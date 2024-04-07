@@ -262,7 +262,7 @@ namespace ninedb::pbt
             uint64_t min_length = keys[0].size();
             for (uint64_t i = 1; i < num_keys; i++)
             {
-                min_length = std::min(min_length, keys[i].size());
+                min_length = std::min<uint64_t>(min_length, keys[i].size());
             }
 
             uint64_t length = 0;
@@ -328,7 +328,7 @@ namespace ninedb::pbt
 
             if (storage->get_size() < write_offset + size)
             {
-                uint64_t new_size = std::max(write_offset + size, 2 * storage->get_size());
+                uint64_t new_size = std::max<uint64_t>(write_offset + size, 2 * storage->get_size());
                 storage->set_size(new_size);
             }
         }
