@@ -86,7 +86,7 @@ jobs:
         run: cmake --build build --config Release
 
       - name: Test
-        run: node -e '(require("./build/Release/ninedb"), console.log("Require OK!"))'
+        run: node -e '(require("./build/bin/ninedb"), console.log("Require OK!"))'
 
       # - name: Install packages
       #   run: npm install
