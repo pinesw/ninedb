@@ -12,7 +12,7 @@
 // #define NINEDB_BINDING_DEBUG
 
 #include "./include/contexts.hpp"
-#include "./include/napi_macros.h"
+#include "./include/napi_macros.hpp"
 #include "./include/napi_utils.hpp"
 
 #include "../src/ninedb/ninedb.hpp"

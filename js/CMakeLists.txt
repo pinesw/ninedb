@@ -45,7 +45,12 @@ if(MSVC)
     SET(CMAKE_CXX_FLAGS "/EHsc")
     execute_process(COMMAND ${CMAKE_AR} /def:${NODE_API_HEADERS}/def/node_api.def /out:${CMAKE_BINARY_DIR}/node_api.lib ${CMAKE_STATIC_LINKER_FLAGS})
     target_link_libraries(${PROJECT_NAME} node_api)
-endif(MSVC)
+endif()
+
+# Ignore undefined symbols on MacOS (for Node API)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    set(CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS "${CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS} -undefined dynamic_lookup")
+endif()
 
 # # Print all variables for debugging
 # get_property(vars DIRECTORY PROPERTY VARIABLES)
