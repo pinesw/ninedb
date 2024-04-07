@@ -19,8 +19,8 @@ jobs:
           # - x86
 
         os:
-          # - ubuntu-20.04
-          # - windows-2022
+          - ubuntu-20.04
+          - windows-2022
           - macos-14
 
     steps:
@@ -53,7 +53,7 @@ jobs:
         run: conan --version
 
       - name: Setup CMake
-        uses: jwlawson/actions-setup-cmake@v1.14
+        uses: jwlawson/actions-setup-cmake@v2.0
         with:
           cmake-version: "3.29.x"
 
