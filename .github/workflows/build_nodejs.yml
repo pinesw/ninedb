@@ -1,4 +1,4 @@
-name: Build bindings for release
+name: Build Node.js bindings for release
 
 on:
   workflow_dispatch:
@@ -19,9 +19,9 @@ jobs:
           # - x86
 
         os:
-          - ubuntu-20.04
-          - windows-2022
-          # - macos-latest
+          # - ubuntu-20.04
+          # - windows-2022
+          - macos-latest
 
     steps:
       - uses: actions/checkout@v4
