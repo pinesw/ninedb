@@ -33,13 +33,11 @@ target_link_libraries(${PROJECT_NAME} Boost::boost lz4::lz4 nlohmann_json::nlohm
 
 if(MSVC)
     SET(CMAKE_CXX_FLAGS "/EHsc")
-
-    # Generate node_api.lib
     execute_process(COMMAND ${CMAKE_AR} /def:${NODE_API_HEADERS}/def/node_api.def /out:${CMAKE_BINARY_DIR}/node_api.lib ${CMAKE_STATIC_LINKER_FLAGS})
     target_link_libraries(${PROJECT_NAME} node_api)
 endif(MSVC)
 
-get_property(vars DIRECTORY PROPERTY VARIABLES)
-foreach (var IN LISTS vars)
-  message(STATUS "${var} = ${${var}}")
-endforeach ()
+# get_property(vars DIRECTORY PROPERTY VARIABLES)
+# foreach (var IN LISTS vars)
+#   message(STATUS "${var} = ${${var}}")
+# endforeach ()
