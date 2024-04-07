@@ -85,6 +85,9 @@ jobs:
       - name: Build
         run: cmake --build build --config Release
 
+      - name: Debug
+        run: find build -print
+
       - name: Test
         run: node -e '(require("./build/bin/ninedb"), console.log("Require OK!"))'
 
