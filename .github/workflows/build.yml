@@ -83,7 +83,7 @@ jobs:
             -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/build/conan_toolchain.cmake"
 
       - name: Build
-        run: cmake --build build
+        run: cmake --build build --config Release
 
       # - name: Install packages
       #   run: npm install
