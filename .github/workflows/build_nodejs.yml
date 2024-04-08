@@ -79,10 +79,15 @@ jobs:
       - name: Test
         run: node -e '(require("./js/build/ninedb"), console.log("Require OK!"))'
 
+      - name: Set artifact name
+        id: artifact_name
+        shell: bash
+        run: echo "artifact_name=$(echo ${{ runner.os }}-${{ runner.arch }}-${{ matrix.node }}.node | awk '{print tolower($0)}')" >> $GITHUB_OUTPUT
+
       - name: Archive artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.node }}.node
+          name: ${{ steps.artifact_name.outputs.artifact_name }}
           path: js/build/ninedb.node
 
       # - name: Install packages
