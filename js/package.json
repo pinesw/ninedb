@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "main": "./binding.ts",
   "scripts": {
+    "prepack": "",
     "install": "node-pre-gyp install --fallback-to-build"
   },
   "dependencies": {
@@ -13,6 +14,11 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.4.3"
   },
+  "files": [
+    "binding.ts",
+    "binding.js",
+    "build/"
+  ],
   "binary": {
     "module_name": "ninedb",
     "module_path": "./lib/binding/{configuration}/{node_abi}-{platform}-{arch}/",

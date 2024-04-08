@@ -10,18 +10,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node:
-          # - 18
-          - 20
+        include:
+          - node: 20
+            architecture: x64
+            os: ubuntu-20.04
 
-        architecture:
-          - x64
-          # - x86
+          - node: 20
+            architecture: x64
+            os: windows-2022
 
-        os:
-          - ubuntu-20.04
-          - windows-2022
-          - macos-14
+          - node: 20
+            architecture: x64
+            os: macos-14
 
     steps:
       - uses: actions/checkout@v4
@@ -61,32 +61,29 @@ jobs:
         run: cmake --version
 
       - name: Install conan dependencies
-        run: conan install . -of build -pr:a profiles/profile_${{ matrix.os }}_${{ matrix.architecture }}_Release.conf
-
-      # - name: Print debug info
-      #   run: |
-      #     echo "Conan path: ${{ github.workspace }}/build"
-      #     echo "Node-API headers: ${{ github.workspace }}/node_modules/node-api-headers"
-      #     echo "Toolchain file: ${{ github.workspace }}/build/conan_toolchain.cmake"
-      #     ls -la ${{ github.workspace }}/build
-      #     ls -la ${{ github.workspace }}/node_modules/node-api-headers
-      #     ls -la ${{ github.workspace }}/build/conan_toolchain.cmake
+        run: conan install . -of js/build -pr:a profiles/profile_${{ matrix.os }}_${{ matrix.architecture }}_Release.conf
 
       - name: Configure CMake
         shell: bash
         run: |
-          cmake -B build \
+          cmake -B js/build \
             -S js \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCONAN_PATH="${{ github.workspace }}/build" \
+            -DCONAN_PATH="${{ github.workspace }}/js/build" \
             -DNODE_API_HEADERS="${{ github.workspace }}/node_modules/node-api-headers" \
-            -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/build/conan_toolchain.cmake"
+            -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/js/build/conan_toolchain.cmake"
 
       - name: Build
-        run: cmake --build build --config Release
+        run: cmake --build js/build --config Release
 
       - name: Test
-        run: node -e '(require("./build/lib/ninedb"), console.log("Require OK!"))'
+        run: node -e '(require("./js/build/ninedb"), console.log("Require OK!"))'
+
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.node }}.node
+          path: js/build/ninedb.node
 
       # - name: Install packages
       #   run: npm install
