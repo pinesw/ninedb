@@ -1,4 +1,4 @@
-name: Build Node.js bindings for release
+name: Build and release Node.js bindings
 
 on:
   workflow_dispatch:
@@ -84,24 +84,28 @@ jobs:
         shell: bash
         run: echo "artifact_name=$(echo ${{ runner.os }}-${{ runner.arch }}-${{ matrix.node }}.node | awk '{print tolower($0)}')" >> $GITHUB_OUTPUT
 
-      - name: Archive artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.artifact_name.outputs.artifact_name }}
           path: js/build/ninedb.node
 
-      # - name: Install packages
-      #   run: npm install
-      #   env:
-      #     SKIP_SASS_BINARY_DOWNLOAD_FOR_CI: true
+  release:
+    needs: build
+    runs-on: ubuntu-20.04
 
-      # - name: Run tests
-      #   run: npm test
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
 
-      # - uses: actions/upload-artifact@v3
-      #   if: github.repository_owner == 'sass' && github.event_name != 'pull_request'
-      #   with:
-      #     name: ${{ matrix.node }}-${{ matrix.architecture }}
-      #     path: |
-      #       vendor/**/binding.node
-      #       build/Release/binding.pdb
+      - name: Create release
+        uses: softprops/action-gh-release@v2.0.4
+        with:
+          files: artifacts/*.node
+          body: |
+            This is the release body.
+            It can contain multiple lines.
+          draft: true
+          prerelease: false
