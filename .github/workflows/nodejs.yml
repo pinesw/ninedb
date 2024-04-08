@@ -82,13 +82,16 @@ jobs:
       - name: Set artifact name
         id: artifact_name
         shell: bash
-        run: echo "artifact_name=$(echo ${{ runner.os }}-${{ runner.arch }}-${{ matrix.node }}.node | awk '{print tolower($0)}')" >> $GITHUB_OUTPUT
+        run: echo "artifact_name=$(echo ${{ runner.os }}-${{ runner.arch }}-${{ matrix.node }} | awk '{print tolower($0)}')" >> $GITHUB_OUTPUT
+      
+      - name: Prepare artifact for upload
+        run: mv js/build/ninedb.node ${{ steps.artifact_name.outputs.artifact_name }}.node
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.artifact_name.outputs.artifact_name }}
-          path: js/build/ninedb.node
+          path: ${{ steps.artifact_name.outputs.artifact_name }}.node
 
   release:
     needs: build
@@ -103,7 +106,7 @@ jobs:
       - name: Create release
         uses: softprops/action-gh-release@v2.0.4
         with:
-          files: artifacts/*.node
+          files: artifacts/**/*.node
           body: |
             This is the release body.
             It can contain multiple lines.
