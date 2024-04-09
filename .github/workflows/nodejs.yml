@@ -131,6 +131,7 @@ jobs:
           prerelease: false
 
       - run: npm ci
+        working-directory: js
 
       - name: Publish Node.js package
         working-directory: js
