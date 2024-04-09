@@ -104,9 +104,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Read latest tag
+      - name: Read tag
         run: |
-          tag=$(git describe --tags --abbrev=0)
+          tag=${GITHUB_REF#refs/tags/}
+          echo "Found tag: $tag"
           echo "tag=$tag" >> $GITHUB_ENV
 
       - name: Download artifacts
