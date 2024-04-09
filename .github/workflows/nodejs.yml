@@ -83,7 +83,7 @@ jobs:
         id: artifact_name
         shell: bash
         run: echo "artifact_name=$(echo ${{ runner.os }}-${{ runner.arch }}-${{ matrix.node }} | awk '{print tolower($0)}')" >> $GITHUB_OUTPUT
-      
+
       - name: Prepare artifact for upload
         run: mv js/build/ninedb.node ${{ steps.artifact_name.outputs.artifact_name }}.node
 
@@ -96,6 +96,9 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-20.04
+
+    permissions:
+      contents: write
 
     steps:
       - name: Download artifacts
