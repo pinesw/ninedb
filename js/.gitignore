@@ -3,3 +3,6 @@ node_modules/
 build/
 conan/
 binding.js
+*.node
+*.d.ts
+*.d.ts.map

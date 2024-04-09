@@ -1,5 +1,6 @@
 import fs from 'fs';
 import os from 'os';
+import stream from 'stream/promises';
 import fetch from 'node-fetch';
 import pjson from './package.json' with {type: 'json'};
 
@@ -36,5 +37,8 @@ fetch(url)
             throw new Error(`Failed to download binary: ${res.statusText}`);
         }
 
-        res.body.pipe(fs.createWriteStream(pjson.binary.target));
+        return stream.pipeline(res.body, fs.createWriteStream(pjson.binary.target));
+    })
+    .then(() => {
+        console.log(`Binary downloaded to ${pjson.binary.target}`);
     });

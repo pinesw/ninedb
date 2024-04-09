@@ -1,7 +1,8 @@
 {
   "name": "ninedb",
   "version": "1.0.0",
-  "main": "./binding.ts",
+  "main": "./binding.js",
+  "types": "./binding.d.ts",
   "scripts": {
     "prepack": "tsc",
     "install": "node install.mjs"
@@ -15,11 +16,13 @@
   },
   "files": [
     "binding.ts",
+    "binding.d.ts",
+    "binding.d.ts.map",
     "binding.js",
-    "install.js"
+    "install.mjs"
   ],
   "binary": {
     "url": "https://github.com/woutervh-/ninedb/releases/download/{package_version}/{platform}-{arch}-{node_version}.node",
-    "target": "./binding.node"
+    "target": "./ninedb.node"
   }
 }

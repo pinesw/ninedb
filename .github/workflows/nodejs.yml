@@ -127,7 +127,7 @@ jobs:
           body: |
             This is the release body.
             It can contain multiple lines.
-          draft: true
+          draft: false
           prerelease: false
 
       # - name: Publish Node.js package
