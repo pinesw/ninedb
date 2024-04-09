@@ -96,6 +96,7 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-20.04
+    if: startsWith(github.ref, 'refs/tags/')
 
     permissions:
       contents: write
@@ -116,7 +117,6 @@ jobs:
       - name: Create release
         uses: softprops/action-gh-release@v2.0.4
         with:
-          tag_name: ${{ env.tag }}
           files: artifacts/**/*.node
           body: |
             This is the release body.
