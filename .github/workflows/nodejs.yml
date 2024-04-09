@@ -103,11 +103,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Create a tag
+      - name: Read latest tag
         run: |
-          VERSION=$(cat js/package.json | jq -er .version)
-          git tag -a -m "Release $VERSION" $VERSION
-          git push origin $VERSION
+          tag=$(git describe --tags --abbrev=0)
+          echo "tag=$tag" >> $GITHUB_ENV
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -117,9 +116,15 @@ jobs:
       - name: Create release
         uses: softprops/action-gh-release@v2.0.4
         with:
+          tag_name: ${{ env.tag }}
           files: artifacts/**/*.node
           body: |
             This is the release body.
             It can contain multiple lines.
           draft: true
           prerelease: false
+      
+      - name: Update Node package version
+        working-directory: js
+        run: |
+          npm version ${{ env.tag }}
