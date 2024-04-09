@@ -130,6 +130,6 @@ jobs:
           draft: false
           prerelease: false
 
-      # - name: Publish Node.js package
-      #   working-directory: js
-      #   run: npm publish
+      - name: Publish Node.js package
+        working-directory: js
+        run: npm publish
