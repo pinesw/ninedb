@@ -15,9 +15,9 @@ jobs:
             architecture: x64
             os: ubuntu-20.04
 
-          # - node: 20
-          #   architecture: x64
-          #   os: windows-2022
+          - node: 20
+            architecture: x64
+            os: windows-2022
 
           - node: 20
             architecture: x64
@@ -129,3 +129,7 @@ jobs:
             It can contain multiple lines.
           draft: true
           prerelease: false
+
+      # - name: Publish Node.js package
+      #   working-directory: js
+      #   run: npm publish

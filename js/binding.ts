@@ -1,14 +1,5 @@
-// var my_module = require("bindings")("conan_node_module");
-
-// const bindingPath = require.resolve(`./build/bin/ninedb`);
-// const binding = require(bindingPath);
-
-// TODO: fetch prebuilt binary from github releases/S3
-
-const binary = require('@mapbox/node-pre-gyp');
-const path = require('path')
-const binding_path = binary.find(path.resolve(path.join(__dirname, './package.json')));
-const binding = require(binding_path);
+const pjson = require('./package.json');
+const binding = require(pjson.binary.target);
 
 declare const __brand: unique symbol;
 type Brand<B> = { [__brand]: B };
