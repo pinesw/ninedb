@@ -130,6 +130,8 @@ jobs:
           draft: false
           prerelease: false
 
+      - run: npm ci
+
       - name: Publish Node.js package
         working-directory: js
         run: npm publish
