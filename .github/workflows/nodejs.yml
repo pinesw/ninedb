@@ -110,6 +110,11 @@ jobs:
           echo "Found tag: $tag"
           echo "tag=$tag" >> $GITHUB_ENV
 
+      - name: Verify Node package version
+        working-directory: js
+        run: |
+          [[ $(cat package.json | jq -er .version) == $tag ]] || exit 1
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
@@ -124,8 +129,3 @@ jobs:
             It can contain multiple lines.
           draft: true
           prerelease: false
-      
-      - name: Update Node package version
-        working-directory: js
-        run: |
-          npm version ${{ env.tag }}
