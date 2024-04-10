@@ -130,6 +130,11 @@ jobs:
           draft: false
           prerelease: false
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          registry-url: "https://registry.npmjs.org"
+
       - run: npm ci --ignore-scripts
         working-directory: js
 
