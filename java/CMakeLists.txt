@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 # Print arguments for debugging
 message(CONAN_PATH="${CONAN_PATH}")
-message(NODE_API_HEADERS="${NODE_API_HEADERS}")
+message(JDK_HOME="${JDK_HOME}")
 
 # Set output directories to be consistent across all platforms
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
@@ -18,9 +18,16 @@ foreach(OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${CMAKE_BINARY_DIR})
 endforeach(OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES)
 
-# Configure Node API
-add_definitions(-DNAPI_VERSION=3)
-include_directories(${NODE_API_HEADERS}/include)
+# Configure Java API
+if(WIN32)
+    include_directories(${JDK_HOME}/include ${JDK_HOME}/include/win32)
+elseif(APPLE)
+    include_directories(${JDK_HOME}/include ${JDK_HOME}/include/darwin)
+elseif(UNIX)
+    include_directories(${JDK_HOME}/include ${JDK_HOME}/include/linux)
+else()
+    message(FATAL_ERROR "Unsupported platform")
+endif()
 
 # Find dependencies via Conan
 list(APPEND CMAKE_MODULE_PATH ${CONAN_PATH})
@@ -31,22 +38,6 @@ find_package(nlohmann_json REQUIRED)
 find_package(lz4 REQUIRED)
 
 # Set up the target
-add_library(${PROJECT_NAME} SHARED ${CMAKE_CURRENT_SOURCE_DIR}/binding.cpp)
-set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
+add_library(${PROJECT_NAME} SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/io_woutervh_ninedb_HrDatabase.cpp)
+set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".dll")
 target_link_libraries(${PROJECT_NAME} Boost::boost lz4::lz4 nlohmann_json::nlohmann_json)
-
-# Link node_api.lib on Windows
-if(MSVC)
-    message("Linking node_api.lib on Windows")
-
-    SET(CMAKE_CXX_FLAGS "/EHsc")
-    execute_process(COMMAND ${CMAKE_AR} /def:${NODE_API_HEADERS}/def/node_api.def /out:${CMAKE_BINARY_DIR}/node_api.lib ${CMAKE_STATIC_LINKER_FLAGS})
-    target_link_libraries(${PROJECT_NAME} node_api)
-endif()
-
-# Ignore undefined symbols on MacOS (for Node API)
-if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
-    message("Ignoring undefined symbols on MacOS")
-
-    set(CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS "${CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS} -undefined dynamic_lookup")
-endif()

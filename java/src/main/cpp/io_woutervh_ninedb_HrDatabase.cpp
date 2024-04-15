@@ -3,5 +3,5 @@
 
 JNIEXPORT jlong JNICALL Java_io_woutervh_ninedb_HrDatabase_open(JNIEnv *, jclass, jstring, jobject)
 {
-    return 0;
+    return 42;
 }
