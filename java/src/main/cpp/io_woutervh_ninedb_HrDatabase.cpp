@@ -35,6 +35,8 @@ JNIEXPORT jlong JNICALL Java_io_woutervh_ninedb_HrDatabase_db_1open(JNIEnv *env,
         config.create_if_missing = true;
     }
 
+    // TODO: Implement the rest of the config
+
     // config.create_if_missing = napi_object_get_property_boolean(env, config_obj, "createIfMissing", true);
     // config.delete_if_exists = napi_object_get_property_boolean(env, config_obj, "deleteIfExists", false);
     // config.error_if_exists = napi_object_get_property_boolean(env, config_obj, "errorIfExists", false);
@@ -57,14 +59,20 @@ JNIEXPORT jlong JNICALL Java_io_woutervh_ninedb_HrDatabase_db_1open(JNIEnv *env,
 
 JNIEXPORT void JNICALL Java_io_woutervh_ninedb_HrDatabase_db_1close(JNIEnv *, jclass, jlong)
 {
+    KvDbContext *context = reinterpret_cast<KvDbContext *>(db_handle);
+    context->kvdb.flush();
+    delete context;
 }
 
 JNIEXPORT void JNICALL Java_io_woutervh_ninedb_HrDatabase_kvdb_1add(JNIEnv *, jclass, jlong, jbyteArray, jbyteArray)
 {
+    // TODO: Implement
 }
 
 JNIEXPORT jbyteArray JNICALL Java_io_woutervh_ninedb_HrDatabase_kvdb_1get(JNIEnv *, jclass, jlong, jbyteArray)
 {
+    // TODO: Implement
+
     // NewByteArray
     jbyteArray result = nullptr;
     return result;
@@ -72,6 +80,8 @@ JNIEXPORT jbyteArray JNICALL Java_io_woutervh_ninedb_HrDatabase_kvdb_1get(JNIEnv
 
 JNIEXPORT jobject JNICALL Java_io_woutervh_ninedb_HrDatabase_kvdb_1at(JNIEnv *env, jclass, jlong db_handle, jlong)
 {
+    // TODO: Implement
+
     jbyteArray key = nullptr;
     jbyteArray value = nullptr;
 
@@ -88,10 +98,14 @@ JNIEXPORT jobject JNICALL Java_io_woutervh_ninedb_HrDatabase_kvdb_1at(JNIEnv *en
     return env->NewObject(jclass_KeyValuePair, jmethodID_KeyValuePair, key, value);
 }
 
-JNIEXPORT void JNICALL Java_io_woutervh_ninedb_HrDatabase_kvdb_1flush(JNIEnv *, jclass, jlong)
+JNIEXPORT void JNICALL Java_io_woutervh_ninedb_HrDatabase_kvdb_1flush(JNIEnv *, jclass, jlong db_handle)
 {
+    KvDbContext *context = reinterpret_cast<KvDbContext *>(db_handle);
+    context->kvdb.flush();
 }
 
 JNIEXPORT void JNICALL Java_io_woutervh_ninedb_HrDatabase_kvdb_1compact(JNIEnv *, jclass, jlong)
 {
+    KvDbContext *context = reinterpret_cast<KvDbContext *>(db_handle);
+    context->kvdb.compact();
 }
