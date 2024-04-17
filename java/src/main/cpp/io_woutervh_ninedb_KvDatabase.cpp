@@ -5,6 +5,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 
 #include "./io_woutervh_ninedb_KvDatabase.h"
 #include "./jni_utils.hpp"
@@ -14,6 +15,8 @@
 
 JNIEXPORT jlong JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1open(JNIEnv *env, jclass, jstring str_path, jobject obj_config)
 {
+    std::cerr << "kvdb_open" << std::endl;
+
     const char *path = env->GetStringUTFChars(str_path, nullptr);
 
     std::unique_ptr<ContextReduceCallback> context_reduce_callback;
@@ -22,6 +25,8 @@ JNIEXPORT jlong JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1open(JNIEnv *en
     {
         context_reduce_callback = std::make_unique<ContextReduceCallback>(env, obj_reduce);
     }
+
+    std::cerr << "kvdb_open: creating context" << std::endl;
 
     ninedb::Config config;
     config.create_if_missing = jni_object_get_property_boolean_boxed(env, obj_config, "createIfMissing", true);
@@ -39,6 +44,8 @@ JNIEXPORT jlong JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1open(JNIEnv *en
     {
         config.writer.reduce = std::bind(&ContextReduceCallback::call, context_reduce_callback.get(), std::placeholders::_1, std::placeholders::_2);
     }
+
+    std::cerr << "kvdb_open: creating context" << std::endl;
 
     KvDbContext *context = new KvDbContext(path, config, std::move(context_reduce_callback));
     jlong ptr = static_cast<jlong>(reinterpret_cast<size_t>(context));
@@ -74,29 +81,38 @@ JNIEXPORT jbyteArray JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1get(JNIEnv
         jbyteArray result = env->NewByteArray(value->size());
         env->SetByteArrayRegion(result, 0, value->size(), reinterpret_cast<const jbyte *>(value->data()));
         return result;
-    } else {
+    }
+    else
+    {
         return nullptr;
     }
 }
 
-JNIEXPORT jobject JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1at(JNIEnv *env, jclass, jlong j_db_handle, jlong)
+JNIEXPORT jobject JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1at(JNIEnv *env, jclass, jlong j_db_handle, jlong at)
 {
-    // TODO: Implement
+    KvDbContext *context = reinterpret_cast<KvDbContext *>(j_db_handle);
 
-    jbyteArray key = nullptr;
-    jbyteArray value = nullptr;
-
-    jclass jclass_KeyValuePair = env->FindClass("io/woutervh/ninedb/KeyValuePair");
-
-    if (jclass_KeyValuePair == nullptr)
+    std::optional<std::pair<std::string, std::string_view>> kv = context->kvdb.at(at);
+    if (!kv.has_value())
     {
-        jclass Exception = env->FindClass("java/lang/Exception");
-        env->ThrowNew(Exception, "Cannot find KeyValuePair class.");
+        return nullptr;
     }
 
-    jmethodID jmethodID_KeyValuePair = env->GetMethodID(jclass_KeyValuePair, "<init>", "([B[B)V");
+    jclass cls_KeyValuePair = env->FindClass("io/woutervh/ninedb/KeyValuePair");
+    if (cls_KeyValuePair == nullptr)
+    {
+        jclass cls_Exception = env->FindClass("java/lang/Exception");
+        env->ThrowNew(cls_Exception, "Cannot find KeyValuePair class.");
+    }
 
-    return env->NewObject(jclass_KeyValuePair, jmethodID_KeyValuePair, key, value);
+    jbyteArray key = env->NewByteArray(kv->first.size());
+    env->SetByteArrayRegion(key, 0, kv->first.size(), reinterpret_cast<const jbyte *>(kv->first.data()));
+    jbyteArray value = env->NewByteArray(kv->second.size());
+    env->SetByteArrayRegion(value, 0, kv->second.size(), reinterpret_cast<const jbyte *>(kv->second.data()));
+    jmethodID mid_KeyValuePair = env->GetMethodID(cls_KeyValuePair, "<init>", "([B[B)V");
+    jobject obj_result = env->NewObject(cls_KeyValuePair, mid_KeyValuePair, key, value);
+
+    return obj_result;
 }
 
 JNIEXPORT void JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1flush(JNIEnv *, jclass, jlong j_db_handle)
