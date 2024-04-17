@@ -80,3 +80,19 @@ std::string jni_byte_array_to_string(JNIEnv *env, jbyteArray j_byte_array)
     env->ReleaseByteArrayElements(j_byte_array, byte_array_data, JNI_ABORT);
     return byte_array_string;
 }
+
+std::string getClassName(JNIEnv *env, jobject entity, jclass clazz)
+{
+    jmethodID mid = env->GetMethodID(clazz, "getClass", "()Ljava/lang/Class;");
+    jobject clsObj = env->CallObjectMethod(entity, mid);
+    jclass clazzz = env->GetObjectClass(clsObj);
+    mid = env->GetMethodID(clazzz, "getName", "()Ljava/lang/String;");
+    jstring strObj = (jstring)env->CallObjectMethod(clsObj, mid);
+
+    const char* str = env->GetStringUTFChars(strObj, NULL);
+    std::string res(str);
+
+    env->ReleaseStringUTFChars(strObj, str);
+
+    return res;
+}

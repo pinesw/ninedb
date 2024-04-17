@@ -15,8 +15,6 @@
 
 JNIEXPORT jlong JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1open(JNIEnv *env, jclass, jstring str_path, jobject obj_config)
 {
-    std::cerr << "kvdb_open" << std::endl;
-
     const char *path = env->GetStringUTFChars(str_path, nullptr);
 
     std::unique_ptr<ContextReduceCallback> context_reduce_callback;
@@ -25,8 +23,6 @@ JNIEXPORT jlong JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1open(JNIEnv *en
     {
         context_reduce_callback = std::make_unique<ContextReduceCallback>(env, obj_reduce);
     }
-
-    std::cerr << "kvdb_open: creating context" << std::endl;
 
     ninedb::Config config;
     config.create_if_missing = jni_object_get_property_boolean_boxed(env, obj_config, "createIfMissing", true);
@@ -44,8 +40,6 @@ JNIEXPORT jlong JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1open(JNIEnv *en
     {
         config.writer.reduce = std::bind(&ContextReduceCallback::call, context_reduce_callback.get(), std::placeholders::_1, std::placeholders::_2);
     }
-
-    std::cerr << "kvdb_open: creating context" << std::endl;
 
     KvDbContext *context = new KvDbContext(path, config, std::move(context_reduce_callback));
     jlong ptr = static_cast<jlong>(reinterpret_cast<size_t>(context));
