@@ -15,10 +15,10 @@ struct ContextHrDb;
 struct ContextKvIterator;
 struct ContextReduceCallback;
 
-struct ContextReduceCallback : FunctionContext<void, const std::vector<std::string>, std::string &>
+struct ContextReduceCallback : FunctionContext<void, const std::vector<std::string> &, std::string &>
 {
     ContextReduceCallback(napi_env env, napi_value func)
-        : FunctionContext<void, const std::vector<std::string>, std::string &>(env, func, to_napi_args, from_napi_result) {}
+        : FunctionContext<void, const std::vector<std::string> &, std::string &>(env, func, to_napi_args, from_napi_result) {}
 
 private:
     static std::vector<napi_value> to_napi_args(napi_env env, const std::vector<std::string> &values, std::string &reduced_value)

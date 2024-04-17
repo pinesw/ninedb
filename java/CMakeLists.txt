@@ -43,6 +43,6 @@ find_package(nlohmann_json REQUIRED)
 find_package(lz4 REQUIRED)
 
 # Set up the target
-add_library(${PROJECT_NAME} SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/io_woutervh_ninedb_HrDatabase.cpp)
+add_library(${PROJECT_NAME} SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/io_woutervh_ninedb_KvDatabase.cpp)
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".dll")
 target_link_libraries(${PROJECT_NAME} Boost::boost lz4::lz4 nlohmann_json::nlohmann_json)
