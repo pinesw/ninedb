@@ -64,11 +64,7 @@ public class KvDatabase implements AutoCloseable {
         config.deleteIfExists = true;
         config.maxNodeEntries = 3;
         config.reduce = (byte[][] keys) -> {
-            System.out.println("Reduce");
-            for (byte[] key : keys) {
-                System.out.println(new String(key));
-            }
-            return keys[keys.length - 1];
+            return keys[0];
         };
 
         try (KvDatabase db = KvDatabase.open("data/test-hrdb", config)) {

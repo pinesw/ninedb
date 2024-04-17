@@ -36,8 +36,13 @@ public:
 
         jclass cls_Function = env->FindClass("java/util/function/Function");
         jmethodID mid_apply = env->GetMethodID(cls_Function, "apply", "(Ljava/lang/Object;)Ljava/lang/Object;");
-
         jobject obj_return = env->CallObjectMethod(obj_reduce_global_ref, mid_apply, obj_values);
+
+        if (obj_return == nullptr)
+        {
+            throw std::runtime_error("Reduce function returned null.");
+        }
+
         jbyteArray obj_reduced_value = reinterpret_cast<jbyteArray>(obj_return);
         jsize reduced_value_size = env->GetArrayLength(obj_reduced_value);
         jbyte *reduced_value_data = env->GetByteArrayElements(obj_reduced_value, nullptr);

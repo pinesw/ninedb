@@ -13,9 +13,11 @@
 
 #include "../../../../src/ninedb/ninedb.hpp"
 
-JNIEXPORT jlong JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1open(JNIEnv *env, jclass, jstring str_path, jobject obj_config)
+JNIEXPORT jlong JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1open(JNIEnv *env, jclass, jstring j_path, jobject obj_config)
 {
-    const char *path = env->GetStringUTFChars(str_path, nullptr);
+    const char *path = env->GetStringUTFChars(j_path, nullptr);
+    std::string path_str(path);
+    env->ReleaseStringUTFChars(j_path, path);
 
     std::unique_ptr<ContextReduceCallback> context_reduce_callback;
     jobject obj_reduce = jni_object_get_property_object(env, obj_config, "reduce", "Ljava/util/function/Function;");
@@ -41,18 +43,32 @@ JNIEXPORT jlong JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1open(JNIEnv *en
         config.writer.reduce = std::bind(&ContextReduceCallback::call, context_reduce_callback.get(), std::placeholders::_1, std::placeholders::_2);
     }
 
-    KvDbContext *context = new KvDbContext(path, config, std::move(context_reduce_callback));
-    jlong ptr = static_cast<jlong>(reinterpret_cast<size_t>(context));
-
-    env->ReleaseStringUTFChars(str_path, path);
-
-    return ptr;
+    try
+    {
+        KvDbContext *context = new KvDbContext(path_str, config, std::move(context_reduce_callback));
+        jlong ptr = static_cast<jlong>(reinterpret_cast<size_t>(context));
+        return ptr;
+    }
+    catch (const std::exception &e)
+    {
+        jni_throw_exception(env, "java/lang/Exception", e.what());
+        return 0;
+    }
 }
 
-JNIEXPORT void JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1close(JNIEnv *, jclass, jlong j_db_handle)
+JNIEXPORT void JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1close(JNIEnv *env, jclass, jlong j_db_handle)
 {
     KvDbContext *context = reinterpret_cast<KvDbContext *>(j_db_handle);
-    context->kvdb.flush();
+
+    try
+    {
+        context->kvdb.flush();
+    }
+    catch (const std::exception &e)
+    {
+        jni_throw_exception(env, "java/lang/Exception", e.what());
+    }
+
     delete context;
 }
 
@@ -61,23 +77,39 @@ JNIEXPORT void JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1add(JNIEnv *env,
     KvDbContext *context = reinterpret_cast<KvDbContext *>(j_db_handle);
     std::string key = jni_byte_array_to_string(env, j_key);
     std::string value = jni_byte_array_to_string(env, j_value);
-    context->kvdb.add(key, value);
+
+    try
+    {
+        context->kvdb.add(key, value);
+    }
+    catch (const std::exception &e)
+    {
+        jni_throw_exception(env, "java/lang/Exception", e.what());
+    }
 }
 
 JNIEXPORT jbyteArray JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1get(JNIEnv *env, jclass, jlong j_db_handle, jbyteArray j_key)
 {
     KvDbContext *context = reinterpret_cast<KvDbContext *>(j_db_handle);
     std::string key = jni_byte_array_to_string(env, j_key);
-    std::optional<std::string_view> value = context->kvdb.get(key);
 
-    if (value.has_value())
+    try
     {
-        jbyteArray result = env->NewByteArray(value->size());
-        env->SetByteArrayRegion(result, 0, value->size(), reinterpret_cast<const jbyte *>(value->data()));
-        return result;
+        std::optional<std::string_view> value = context->kvdb.get(key);
+        if (value.has_value())
+        {
+            jbyteArray result = env->NewByteArray(value->size());
+            env->SetByteArrayRegion(result, 0, value->size(), reinterpret_cast<const jbyte *>(value->data()));
+            return result;
+        }
+        else
+        {
+            return nullptr;
+        }
     }
-    else
+    catch (const std::exception &e)
     {
+        jni_throw_exception(env, "java/lang/Exception", e.what());
         return nullptr;
     }
 }
@@ -86,37 +118,61 @@ JNIEXPORT jobject JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1at(JNIEnv *en
 {
     KvDbContext *context = reinterpret_cast<KvDbContext *>(j_db_handle);
 
-    std::optional<std::pair<std::string, std::string_view>> kv = context->kvdb.at(at);
-    if (!kv.has_value())
+    try
     {
+        std::optional<std::pair<std::string, std::string_view>> kv = context->kvdb.at(at);
+        if (!kv.has_value())
+        {
+            return nullptr;
+        }
+
+        jclass cls_KeyValuePair = env->FindClass("io/woutervh/ninedb/KeyValuePair");
+        if (cls_KeyValuePair == nullptr)
+        {
+            jclass cls_Exception = env->FindClass("java/lang/Exception");
+            env->ThrowNew(cls_Exception, "Cannot find KeyValuePair class.");
+        }
+
+        jbyteArray key = env->NewByteArray(kv->first.size());
+        env->SetByteArrayRegion(key, 0, kv->first.size(), reinterpret_cast<const jbyte *>(kv->first.data()));
+        jbyteArray value = env->NewByteArray(kv->second.size());
+        env->SetByteArrayRegion(value, 0, kv->second.size(), reinterpret_cast<const jbyte *>(kv->second.data()));
+        jmethodID mid_KeyValuePair = env->GetMethodID(cls_KeyValuePair, "<init>", "([B[B)V");
+        jobject obj_result = env->NewObject(cls_KeyValuePair, mid_KeyValuePair, key, value);
+
+        return obj_result;
+    }
+    catch (const std::exception &e)
+    {
+        jni_throw_exception(env, "java/lang/Exception", e.what());
         return nullptr;
     }
+}
 
-    jclass cls_KeyValuePair = env->FindClass("io/woutervh/ninedb/KeyValuePair");
-    if (cls_KeyValuePair == nullptr)
+JNIEXPORT void JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1flush(JNIEnv *env, jclass, jlong j_db_handle)
+{
+    KvDbContext *context = reinterpret_cast<KvDbContext *>(j_db_handle);
+
+    try
     {
-        jclass cls_Exception = env->FindClass("java/lang/Exception");
-        env->ThrowNew(cls_Exception, "Cannot find KeyValuePair class.");
+        context->kvdb.flush();
     }
-
-    jbyteArray key = env->NewByteArray(kv->first.size());
-    env->SetByteArrayRegion(key, 0, kv->first.size(), reinterpret_cast<const jbyte *>(kv->first.data()));
-    jbyteArray value = env->NewByteArray(kv->second.size());
-    env->SetByteArrayRegion(value, 0, kv->second.size(), reinterpret_cast<const jbyte *>(kv->second.data()));
-    jmethodID mid_KeyValuePair = env->GetMethodID(cls_KeyValuePair, "<init>", "([B[B)V");
-    jobject obj_result = env->NewObject(cls_KeyValuePair, mid_KeyValuePair, key, value);
-
-    return obj_result;
+    catch (const std::exception &e)
+    {
+        jni_throw_exception(env, "java/lang/Exception", e.what());
+    }
 }
 
-JNIEXPORT void JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1flush(JNIEnv *, jclass, jlong j_db_handle)
+JNIEXPORT void JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1compact(JNIEnv *env, jclass, jlong j_db_handle)
 {
     KvDbContext *context = reinterpret_cast<KvDbContext *>(j_db_handle);
-    context->kvdb.flush();
-}
 
-JNIEXPORT void JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1compact(JNIEnv *, jclass, jlong j_db_handle)
-{
-    KvDbContext *context = reinterpret_cast<KvDbContext *>(j_db_handle);
-    context->kvdb.compact();
+    try
+    {
+        context->kvdb.compact();
+    }
+    catch (const std::exception &e)
+    {
+        jni_throw_exception(env, "java/lang/Exception", e.what());
+    }
 }

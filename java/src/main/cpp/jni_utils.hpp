@@ -96,3 +96,9 @@ std::string getClassName(JNIEnv *env, jobject entity, jclass clazz)
 
     return res;
 }
+
+void jni_throw_exception(JNIEnv *env, const char *exception_class, const char *message)
+{
+    jclass cls_Exception = env->FindClass(exception_class);
+    env->ThrowNew(cls_Exception, message);
+}
