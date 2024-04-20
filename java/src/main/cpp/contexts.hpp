@@ -8,6 +8,19 @@
 
 #include "../../../../src/ninedb/ninedb.hpp"
 
+struct ContextKvDb;
+struct ContextHrDb;
+struct ContextKvIterator;
+struct ContextReduceCallback;
+
+struct ContextKvIterator
+{
+public:
+    ninedb::Iterator itr;
+
+    ContextKvIterator(ninedb::Iterator &&itr) : itr(std::move(itr)) {}
+};
+
 struct ContextReduceCallback
 {
 private:
@@ -16,7 +29,7 @@ private:
 
 public:
     ContextReduceCallback(JNIEnv *env, jobject obj_reduce)
-        : env(env), obj_reduce_global_ref(env->NewGlobalRef(obj_reduce))    {    }
+        : env(env), obj_reduce_global_ref(env->NewGlobalRef(obj_reduce)) {}
 
     ~ContextReduceCallback()
     {
@@ -51,7 +64,7 @@ public:
     }
 };
 
-struct KvDbContext
+struct ContextKvDb
 {
 public:
     ninedb::KvDb kvdb;
@@ -60,6 +73,10 @@ private:
     std::unique_ptr<ContextReduceCallback> context_reduce_callback;
 
 public:
-    KvDbContext(const std::string &path, const ninedb::Config &config, std::unique_ptr<ContextReduceCallback> &&context_reduce_callback)
+    ContextKvDb(const std::string &path, const ninedb::Config &config, std::unique_ptr<ContextReduceCallback> &&context_reduce_callback)
         : kvdb(ninedb::KvDb::open(path, config)), context_reduce_callback(std::move(context_reduce_callback)) {}
+};
+
+struct ContextHrDb {
+    
 };

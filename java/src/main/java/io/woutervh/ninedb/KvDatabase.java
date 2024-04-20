@@ -1,5 +1,7 @@
 package io.woutervh.ninedb;
 
+import java.util.function.Predicate;
+
 public class KvDatabase implements AutoCloseable {
     static {
         System.loadLibrary("ninedb");
@@ -15,13 +17,17 @@ public class KvDatabase implements AutoCloseable {
 
     private static native KeyValuePair kvdb_at(long db_handle, long index);
 
-    // private static native void kvdb_traverse(long db_handle, );
+    private static native byte[][] kvdb_traverse(long db_handle, Predicate<byte[]> predicate);
+
     private static native void kvdb_flush(long db_handle);
 
     private static native void kvdb_compact(long db_handle);
-    // private static native void kvdb_begin(long db_handle);
-    // private static native void kvdb_seek_key(long db_handle);
-    // private static native void kvdb_seek_index(long db_handle);
+
+    private static native long kvdb_begin(long db_handle);
+
+    private static native long kvdb_seek_key(long db_handle, byte[] key);
+
+    private static native long kvdb_seek_index(long db_handle, long index);
 
     private long db_handle;
 
@@ -54,31 +60,27 @@ public class KvDatabase implements AutoCloseable {
         kvdb_compact(db_handle);
     }
 
+    public byte[][] traverse(Predicate<byte[]> predicate) {
+        return kvdb_traverse(db_handle, predicate);
+    }
+
+    public KvDbIterator begin() {
+        long it_handle = kvdb_begin(db_handle);
+        return new KvDbIterator(it_handle);
+    }
+
+    public KvDbIterator seekKey(byte[] key) {
+        long it_handle = kvdb_seek_key(db_handle, key);
+        return new KvDbIterator(it_handle);
+    }
+
+    public KvDbIterator seekIndex(long index) {
+        long it_handle = kvdb_seek_index(db_handle, index);
+        return new KvDbIterator(it_handle);
+    }
+
     public static KvDatabase open(String path, DbConfig config) {
         long db_handle = kvdb_open(path, config);
         return new KvDatabase(db_handle);
-    }
-
-    public static void main(String[] args) throws Exception {
-        DbConfig config = new DbConfig();
-        config.deleteIfExists = true;
-        config.maxNodeEntries = 3;
-        config.reduce = (byte[][] keys) -> {
-            return keys[0];
-        };
-
-        try (KvDatabase db = KvDatabase.open("data/test-hrdb", config)) {
-            db.add("key_1".getBytes(), "value_1".getBytes());
-            db.add("key_2".getBytes(), "value_2".getBytes());
-            db.add("key_3".getBytes(), "value_3".getBytes());
-            db.add("key_4".getBytes(), "value_4".getBytes());
-            db.add("key_5".getBytes(), "value_5".getBytes());
-            db.add("key_6".getBytes(), "value_6".getBytes());
-            db.add("key_7".getBytes(), "value_7".getBytes());
-            db.add("key_8".getBytes(), "value_8".getBytes());
-            db.add("key_9".getBytes(), "value_9".getBytes());
-            db.add("key_10".getBytes(), "value_10".getBytes());
-            db.flush();
-        }
     }
 }

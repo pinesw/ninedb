@@ -14,8 +14,10 @@ cmake --build java/build --config Release
 ```bash
 cd java
 
-javac -h src/main/cpp -cp src/main/java src/main/java/io/woutervh/ninedb/KvDatabase.java
-java -Djava.library.path=build -cp src/main/java io.woutervh.ninedb.KvDatabase
+javac -h src/main/cpp -cp src/main/java src/main/java/io/woutervh/ninedb/KvDatabase.java src/main/java/io/woutervh/ninedb/KvDbIterator.java src/main/java/io/woutervh/ninedb/HrDatabase.java
+
+javac -cp "src/main/java;test/java" test/java/io/woutervh/ninedb/Test.java
+java -Djava.library.path=build -cp "src/main/java;test/java" io.woutervh.ninedb.Test
 ```
 
 ```bash

@@ -49,6 +49,14 @@ JNIEXPORT jobject JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1at
 
 /*
  * Class:     io_woutervh_ninedb_KvDatabase
+ * Method:    kvdb_traverse
+ * Signature: (JLjava/util/function/Predicate;)[[B
+ */
+JNIEXPORT jobjectArray JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1traverse
+  (JNIEnv *, jclass, jlong, jobject);
+
+/*
+ * Class:     io_woutervh_ninedb_KvDatabase
  * Method:    kvdb_flush
  * Signature: (J)V
  */
@@ -62,6 +70,30 @@ JNIEXPORT void JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1flush
  */
 JNIEXPORT void JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1compact
   (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     io_woutervh_ninedb_KvDatabase
+ * Method:    kvdb_begin
+ * Signature: (J)J
+ */
+JNIEXPORT jlong JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1begin
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     io_woutervh_ninedb_KvDatabase
+ * Method:    kvdb_seek_key
+ * Signature: (J[B)J
+ */
+JNIEXPORT jlong JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1seek_1key
+  (JNIEnv *, jclass, jlong, jbyteArray);
+
+/*
+ * Class:     io_woutervh_ninedb_KvDatabase
+ * Method:    kvdb_seek_index
+ * Signature: (JJ)J
+ */
+JNIEXPORT jlong JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1seek_1index
+  (JNIEnv *, jclass, jlong, jlong);
 
 #ifdef __cplusplus
 }

@@ -164,8 +164,8 @@ private:
     ContextKvDb *context_db;
 
 public:
-    ContextKvIterator(napi_env env, ContextKvDb *context_db, ninedb::Iterator itr)
-        : context_db(context_db), itr(itr)
+    ContextKvIterator(napi_env env, ContextKvDb *context_db, ninedb::Iterator &&itr)
+        : context_db(context_db), itr(std::move(itr))
     {
         NAPI_STATUS_THROW_ERROR(napi_create_external(env, this, finalize_cb, NULL, &external));
         context_db->ref(env);
