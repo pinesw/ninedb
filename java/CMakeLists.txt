@@ -1,8 +1,3 @@
-# For local development TODO: Remove this
-set(CONAN_PATH "C:/Users/Wouter/workspace/ninedb/java/build")
-set(JDK_HOME "C:/Program Files/AdoptOpenJDK/jdk-11.0.9.101-hotspot")
-set(CMAKE_TOOLCHAIN_FILE "C:/Users/Wouter/workspace/ninedb/java/build/conan_toolchain.cmake")
-
 # Set up the project
 cmake_minimum_required(VERSION 3.27)
 project(ninedb LANGUAGES CXX)
