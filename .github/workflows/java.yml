@@ -77,9 +77,9 @@ jobs:
           pwd
           ls -la
           echo "Compiling..."
-          javac -cp "java/src/main/java;java/test/java" java/test/java/io/woutervh/ninedb/Test.java
+          javac -cp "${{ github.workspace }}/java/src/main/java;${{ github.workspace }}/java/test/java" java/test/java/io/woutervh/ninedb/Test.java
           echo "Running..."
-          java -cp "java/src/main/java;java/test/java" -Djava.library.path=java/build io.woutervh.ninedb.Test
+          java -cp "${{ github.workspace }}/java/src/main/java;${{ github.workspace }}/java/test/java" -Djava.library.path=java/build io.woutervh.ninedb.Test
 
       - name: Set artifact name
         id: artifact_name
