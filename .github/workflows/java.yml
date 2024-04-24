@@ -1,0 +1,92 @@
+name: Build and release Java bindings
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - java: 17
+            architecture: x64
+            os: ubuntu-20.04
+
+          # - node: 20
+          #   architecture: x64
+          #   os: windows-2022
+
+          # - node: 20
+          #   architecture: x64
+          #   os: macos-14
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java environment
+        uses: actions/setup-java@v4
+        with:
+          distribution: "adopt"
+          java-version: ${{ matrix.java }}
+
+      - name: Print info
+        run: |
+          echo "Java version: ${{ matrix.java }}"
+          echo "Architecture: ${{ matrix.architecture }}"
+          echo "Operating System: ${{ matrix.os }}"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - run: pip install -r requirements.txt
+
+      - name: Print Conan version
+        run: conan --version
+
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@v2.0
+        with:
+          cmake-version: "3.29.x"
+
+      - name: Print CMake version
+        run: cmake --version
+
+      - name: Install conan dependencies
+        run: conan install . -of java/build -pr:a profiles/profile_${{ matrix.os }}_${{ matrix.architecture }}_Release.conf
+
+      - name: Configure CMake
+        shell: bash
+        run: |
+          cmake -B java/build \
+            -S java \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCONAN_PATH="${{ github.workspace }}/java/build" \
+            -DJDK_HOME="${JAVA_HOME}" \
+            -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/java/build/conan_toolchain.cmake"
+
+      - name: Build
+        run: cmake --build java/build --config Release
+
+      - name: Test
+        run: |
+          javac -cp "java/src/main/java;java/test/java" java/test/java/io/woutervh/ninedb/Test.java
+          java -cp "java/src/main/java;java/test/java" -Djava.library.path=java/build io.woutervh.ninedb.Test
+
+      - name: Set artifact name
+        id: artifact_name
+        shell: bash
+        run: echo "artifact_name=$(echo ${{ runner.os }}-${{ runner.arch }}-${{ matrix.node }} | awk '{print tolower($0)}')" >> $GITHUB_OUTPUT
+
+      - name: Prepare artifact for upload
+        run: mv java/build/ninedb.dll ${{ steps.artifact_name.outputs.artifact_name }}.dll
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.artifact_name.outputs.artifact_name }}
+          path: ${{ steps.artifact_name.outputs.artifact_name }}.dll
