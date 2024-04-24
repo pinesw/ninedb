@@ -74,7 +74,9 @@ jobs:
 
       - name: Test
         run: |
+          echo "Compiling..."
           javac -cp "java/src/main/java;java/test/java" java/test/java/io/woutervh/ninedb/Test.java
+          echo "Running..."
           java -cp "java/src/main/java;java/test/java" -Djava.library.path=java/build io.woutervh.ninedb.Test
 
       - name: Set artifact name
