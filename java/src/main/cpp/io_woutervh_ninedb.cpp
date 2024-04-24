@@ -6,6 +6,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 #include "./io_woutervh_ninedb_KvDatabase.h"
 #include "./io_woutervh_ninedb_KvDbIterator.h"
@@ -339,8 +340,9 @@ JNIEXPORT jbyteArray JNICALL Java_io_woutervh_ninedb_KvDbIterator_itr_1get_1valu
     }
 }
 
-JNIEXPORT jlong JNICALL Java_io_woutervh_ninedb_HrDatabase_hrdb_1open(JNIEnv *env, jclass, jstring str_path, jobject obj_config) {
- const char *path = env->GetStringUTFChars(str_path, nullptr);
+JNIEXPORT jlong JNICALL Java_io_woutervh_ninedb_HrDatabase_hrdb_1open(JNIEnv *env, jclass, jstring str_path, jobject obj_config)
+{
+    const char *path = env->GetStringUTFChars(str_path, nullptr);
     std::string path_str(path);
     env->ReleaseStringUTFChars(str_path, path);
 
@@ -368,25 +370,86 @@ JNIEXPORT jlong JNICALL Java_io_woutervh_ninedb_HrDatabase_hrdb_1open(JNIEnv *en
         jni_throw_exception(env, "java/lang/Exception", e.what());
         return 0;
     }
-  }
-  
-JNIEXPORT void JNICALL Java_io_woutervh_ninedb_HrDatabase_hrdb_1close(JNIEnv *env, jclass, jlong j_handle_db) {
+}
 
-  }
-  
-JNIEXPORT void JNICALL Java_io_woutervh_ninedb_HrDatabase_hrdb_1add(JNIEnv *env, jclass, jlong j_handle_db, jlong, jlong, jlong, jlong, jbyteArray) {
+JNIEXPORT void JNICALL Java_io_woutervh_ninedb_HrDatabase_hrdb_1close(JNIEnv *env, jclass, jlong j_handle_db)
+{
+    ContextHrDb *context = reinterpret_cast<ContextHrDb *>(j_handle_db);
 
-  }
-  
-JNIEXPORT jobjectArray JNICALL Java_io_woutervh_ninedb_HrDatabase_hrdb_1search(JNIEnv *env, jclass, jlong j_handle_db, jlong, jlong, jlong, jlong) {
+    try
+    {
+        context->hrdb.flush();
+    }
+    catch (const std::exception &e)
+    {
+        jni_throw_exception(env, "java/lang/Exception", e.what());
+    }
 
-  }
-  
-JNIEXPORT void JNICALL Java_io_woutervh_ninedb_HrDatabase_hrdb_1flush(JNIEnv *env, jclass, jlong j_handle_db) {
+    delete context;
+}
 
-  }
-  
-JNIEXPORT void JNICALL Java_io_woutervh_ninedb_HrDatabase_hrdb_1compact(JNIEnv *env, jclass, jlong j_handle_db) {
+JNIEXPORT void JNICALL Java_io_woutervh_ninedb_HrDatabase_hrdb_1add(JNIEnv *env, jclass, jlong j_handle_db, jlong x0, jlong y0, jlong x1, jlong y1, jbyteArray j_value)
+{
+    ContextHrDb *context = reinterpret_cast<ContextHrDb *>(j_handle_db);
+    std::string value = jni_byte_array_to_string(env, j_value);
 
-  }
-  
+    try
+    {
+        context->hrdb.add(x0, y0, x1, y1, value);
+    }
+    catch (const std::exception &e)
+    {
+        jni_throw_exception(env, "java/lang/Exception", e.what());
+    }
+}
+
+JNIEXPORT jobjectArray JNICALL Java_io_woutervh_ninedb_HrDatabase_hrdb_1search(JNIEnv *env, jclass, jlong j_handle_db, jlong x0, jlong y0, jlong x1, jlong y1)
+{
+    ContextHrDb *context = reinterpret_cast<ContextHrDb *>(j_handle_db);
+
+    try
+    {
+        std::vector<std::string_view> values = context->hrdb.search(x0, y0, x1, y1);
+        jobjectArray result = env->NewObjectArray(values.size(), env->FindClass("[B"), nullptr);
+        for (size_t i = 0; i < values.size(); i++)
+        {
+            jbyteArray j_value = env->NewByteArray(values[i].size());
+            env->SetByteArrayRegion(j_value, 0, values[i].size(), reinterpret_cast<const jbyte *>(values[i].data()));
+            env->SetObjectArrayElement(result, i, j_value);
+        }
+        return result;
+    }
+    catch (const std::exception &e)
+    {
+        jni_throw_exception(env, "java/lang/Exception", e.what());
+        return nullptr;
+    }
+}
+
+JNIEXPORT void JNICALL Java_io_woutervh_ninedb_HrDatabase_hrdb_1flush(JNIEnv *env, jclass, jlong j_handle_db)
+{
+    ContextHrDb *context = reinterpret_cast<ContextHrDb *>(j_handle_db);
+
+    try
+    {
+        context->hrdb.flush();
+    }
+    catch (const std::exception &e)
+    {
+        jni_throw_exception(env, "java/lang/Exception", e.what());
+    }
+}
+
+JNIEXPORT void JNICALL Java_io_woutervh_ninedb_HrDatabase_hrdb_1compact(JNIEnv *env, jclass, jlong j_handle_db)
+{
+    ContextHrDb *context = reinterpret_cast<ContextHrDb *>(j_handle_db);
+
+    try
+    {
+        context->hrdb.compact();
+    }
+    catch (const std::exception &e)
+    {
+        jni_throw_exception(env, "java/lang/Exception", e.what());
+    }
+}

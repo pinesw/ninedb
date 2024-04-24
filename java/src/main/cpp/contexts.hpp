@@ -77,6 +77,11 @@ public:
         : kvdb(ninedb::KvDb::open(path, config)), context_reduce_callback(std::move(context_reduce_callback)) {}
 };
 
-struct ContextHrDb {
-    
+struct ContextHrDb
+{
+public:
+    ninedb::HrDb hrdb;
+
+    ContextHrDb(const std::string &path, const ninedb::Config &config)
+        : hrdb(ninedb::HrDb::open(path, config)) {}
 };
