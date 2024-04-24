@@ -49,6 +49,7 @@ JNIEXPORT jlong JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1open(JNIEnv *en
 
     try
     {
+        // new: will be deleted in kvdb_close
         ContextKvDb *context = new ContextKvDb(path_str, config, std::move(context_reduce_callback));
         jlong ptr = static_cast<jlong>(reinterpret_cast<size_t>(context));
         return ptr;
@@ -223,6 +224,7 @@ JNIEXPORT jlong JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1begin(JNIEnv *e
 
     try
     {
+        // new: will be deleted in itr_close
         ContextKvIterator *context_itr = new ContextKvIterator(context->kvdb.begin());
         jlong ptr = static_cast<jlong>(reinterpret_cast<size_t>(context_itr));
         return ptr;
@@ -237,10 +239,11 @@ JNIEXPORT jlong JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1begin(JNIEnv *e
 JNIEXPORT jlong JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1seek_1key(JNIEnv *env, jclass, jlong j_handle_db, jbyteArray j_key)
 {
     ContextKvDb *context = reinterpret_cast<ContextKvDb *>(j_handle_db);
+    std::string key = jni_byte_array_to_string(env, j_key);
 
     try
     {
-        std::string key = jni_byte_array_to_string(env, j_key);
+        // new: will be deleted in itr_close
         ContextKvIterator *context_itr = new ContextKvIterator(context->kvdb.seek(key));
         jlong ptr = static_cast<jlong>(reinterpret_cast<size_t>(context_itr));
         return ptr;
@@ -258,6 +261,7 @@ JNIEXPORT jlong JNICALL Java_io_woutervh_ninedb_KvDatabase_kvdb_1seek_1index(JNI
 
     try
     {
+        // new: will be deleted in itr_close
         ContextKvIterator *context_itr = new ContextKvIterator(context->kvdb.seek(at));
         jlong ptr = static_cast<jlong>(reinterpret_cast<size_t>(context_itr));
         return ptr;
@@ -361,6 +365,7 @@ JNIEXPORT jlong JNICALL Java_io_woutervh_ninedb_HrDatabase_hrdb_1open(JNIEnv *en
 
     try
     {
+        // new: will be deleted in hrdb_close
         ContextHrDb *context = new ContextHrDb(path_str, config);
         jlong ptr = static_cast<jlong>(reinterpret_cast<size_t>(context));
         return ptr;
