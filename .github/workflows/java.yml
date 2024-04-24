@@ -74,6 +74,8 @@ jobs:
 
       - name: Test
         run: |
+          pwd
+          ls -la
           echo "Compiling..."
           javac -cp "java/src/main/java;java/test/java" java/test/java/io/woutervh/ninedb/Test.java
           echo "Running..."
