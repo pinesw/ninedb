@@ -90,7 +90,7 @@ jobs:
             macos*)
               CP_SEPARATOR=":"
               LIB_PREFIX="lib"
-              LIB_EXT="dylib"
+              LIB_EXT="jnilib"
               ;;
           esac
           ARTIFACT_NAME=$(echo ${{ runner.os }}-${{ runner.arch }}-${{ matrix.java }} | awk '{print tolower($0)}')
@@ -119,3 +119,34 @@ jobs:
         with:
           name: ${{ steps.configure_variables.outputs.artifact_name }}
           path: ${{ steps.configure_variables.outputs.artifact_target }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-20.04
+    # if: startsWith(github.ref, 'refs/tags/')
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      
+      - name: Copy artifacts to target
+        run: |
+          mkdir -p java/target
+          cp artifacts/*.so artifacts/*.dll artifacts/*.jnilib java/target
+
+      - name: Package jar
+        run: |
+          mvn package -f java/pom.xml
+    
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: java
+          path: java/target/ninedb-1.0.0-SNAPSHOT.jar
