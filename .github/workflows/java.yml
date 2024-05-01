@@ -14,14 +14,20 @@ jobs:
           - java: 11
             architecture: x64
             os: ubuntu-20.04
+            cp_separator: ":"
+            lib_ext: "so"
 
           # - node: 20
           #   architecture: x64
           #   os: windows-2022
+          #   cp_separator: ";"
+          #   lib_ext: "dll"
 
           # - node: 20
           #   architecture: x64
           #   os: macos-14
+          #   cp_separator: ":"
+          #   lib_ext: "dylib"
 
     steps:
       - uses: actions/checkout@v4
@@ -74,12 +80,8 @@ jobs:
 
       - name: Test
         run: |
-          pwd
-          ls -la
-          echo "Compiling..."
-          javac -verbose -cp "${{ github.workspace }}/java/src/main/java:${{ github.workspace }}/java/test/java" java/test/java/io/woutervh/ninedb/Test.java
-          echo "Running..."
-          java -cp "${{ github.workspace }}/java/src/main/java:${{ github.workspace }}/java/test/java" -Djava.library.path=java/build io.woutervh.ninedb.Test
+          javac -cp "${{ github.workspace }}/java/src/main/java${{ matrix.cp_separator }}${{ github.workspace }}/java/test/java" java/test/java/io/woutervh/ninedb/Test.java
+          java -cp "${{ github.workspace }}/java/src/main/java${{ matrix.cp_separator }}${{ github.workspace }}/java/test/java" -Djava.library.path=java/build io.woutervh.ninedb.Test
 
       - name: Set artifact name
         id: artifact_name
@@ -87,10 +89,10 @@ jobs:
         run: echo "artifact_name=$(echo ${{ runner.os }}-${{ runner.arch }}-${{ matrix.node }} | awk '{print tolower($0)}')" >> $GITHUB_OUTPUT
 
       - name: Prepare artifact for upload
-        run: mv java/build/ninedb.dll ${{ steps.artifact_name.outputs.artifact_name }}.dll
+        run: mv java/build/ninedb.${{ matrix.lib_ext }} ${{ steps.artifact_name.outputs.artifact_name }}.${{ matrix.lib_ext }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.artifact_name.outputs.artifact_name }}
-          path: ${{ steps.artifact_name.outputs.artifact_name }}.dll
+          path: ${{ steps.artifact_name.outputs.artifact_name }}.${{ matrix.lib_ext }}

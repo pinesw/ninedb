@@ -39,5 +39,14 @@ find_package(lz4 REQUIRED)
 
 # Set up the target
 add_library(${PROJECT_NAME} SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/io_woutervh_ninedb.cpp)
-set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".dll")
 target_link_libraries(${PROJECT_NAME} Boost::boost lz4::lz4 nlohmann_json::nlohmann_json)
+
+if(WIN32)
+    set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".dll")
+elseif(APPLE)
+    set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".dylib")
+elseif(UNIX)
+    set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".so")
+else()
+    message(FATAL_ERROR "Unsupported platform")
+endif()
