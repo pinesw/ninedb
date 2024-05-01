@@ -59,6 +59,11 @@ public class Test {
     }
 
     public static void main(String[] args) {
+        File file = new File("data");
+        if (!file.exists()) {
+            file.mkdir();
+        }
+
         System.out.println("Testing HrDatabase");
         TestHrDb();
         
