@@ -94,10 +94,10 @@ jobs:
               ;;
           esac
           ARTIFACT_NAME=$(echo ${{ runner.os }}-${{ runner.arch }}-${{ matrix.node }} | awk '{print tolower($0)}')
-          echo "local_cp=${{ github.workspace }}/java/src/main/java${CP_SEPARATOR}${{ github.workspace }}/java/test/java" >> $GITHUB_OUTPUT
           echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
           echo "artifact_source=${LIB_PREFIX}ninedb.${LIB_EXT}" >> $GITHUB_OUTPUT
-          echo "artifact_target=${LIB_PREFIX}${{ steps.configure_variables.outputs.artifact_name }}.${LIB_EXT}" >> $GITHUB_OUTPUT
+          echo "artifact_target=${LIB_PREFIX}${ARTIFACT_NAME}.${LIB_EXT}" >> $GITHUB_OUTPUT
+          echo "local_cp=${{ github.workspace }}/java/src/main/java${CP_SEPARATOR}${{ github.workspace }}/java/test/java" >> $GITHUB_OUTPUT
 
       - name: Print variables
         run: |
