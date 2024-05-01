@@ -76,7 +76,7 @@ jobs:
         id: configure_variables
         shell: bash
         run: |
-          case ${{ runner.os }} in
+          case ${{ matrix.os }} in
             ubuntu*)
               CP_SEPARATOR=":"
               LIB_PREFIX="lib"
