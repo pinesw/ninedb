@@ -1,5 +1,7 @@
 package io.woutervh.ninedb;
 
+import java.io.File;
+
 public class Test {
     public static void TestKvDb() {
         DbConfig config = new DbConfig();
