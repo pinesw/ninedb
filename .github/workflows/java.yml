@@ -77,7 +77,7 @@ jobs:
           pwd
           ls -la
           echo "Compiling..."
-          javac -cp "${{ github.workspace }}/java/src/main/java;${{ github.workspace }}/java/test/java" java/test/java/io/woutervh/ninedb/Test.java
+          javac -verbose -cp "${{ github.workspace }}/java/src/main/java;${{ github.workspace }}/java/test/java" java/test/java/io/woutervh/ninedb/Test.java
           echo "Running..."
           java -cp "${{ github.workspace }}/java/src/main/java;${{ github.workspace }}/java/test/java" -Djava.library.path=java/build io.woutervh.ninedb.Test
 
