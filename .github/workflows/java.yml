@@ -15,11 +15,11 @@ jobs:
             architecture: x64
             os: ubuntu-20.04
 
-          # - node: 20
+          # - java: 11
           #   architecture: x64
           #   os: windows-2022
 
-          # - node: 20
+          # - java: 11
           #   architecture: x64
           #   os: macos-14
 
@@ -93,7 +93,7 @@ jobs:
               LIB_EXT="dylib"
               ;;
           esac
-          ARTIFACT_NAME=$(echo ${{ runner.os }}-${{ runner.arch }}-${{ matrix.node }} | awk '{print tolower($0)}')
+          ARTIFACT_NAME=$(echo ${{ runner.os }}-${{ runner.arch }}-${{ matrix.java }} | awk '{print tolower($0)}')
           echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
           echo "artifact_source=${LIB_PREFIX}ninedb.${LIB_EXT}" >> $GITHUB_OUTPUT
           echo "artifact_target=${LIB_PREFIX}${ARTIFACT_NAME}.${LIB_EXT}" >> $GITHUB_OUTPUT
