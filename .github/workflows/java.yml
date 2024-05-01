@@ -15,19 +15,16 @@ jobs:
             architecture: x64
             os: ubuntu-20.04
             cp_separator: ":"
-            lib_ext: "so"
 
           # - node: 20
           #   architecture: x64
           #   os: windows-2022
           #   cp_separator: ";"
-          #   lib_ext: "dll"
 
           # - node: 20
           #   architecture: x64
           #   os: macos-14
           #   cp_separator: ":"
-          #   lib_ext: "dylib"
 
     steps:
       - uses: actions/checkout@v4
@@ -78,23 +75,40 @@ jobs:
       - name: Build
         run: cmake --build java/build --config Release
 
+      - name: Configure variables
+        id: configure_variables
+        shell: bash
+        run: |
+          case ${{ runner.os }} in
+            ubuntu*)
+              LIB_PREFIX="lib"
+              LIB_EXT="so"
+              ;;
+            windows*)
+              LIB_PREFIX=""
+              LIB_EXT="dll"
+              ;;
+            macos*)
+              LIB_PREFIX="lib"
+              LIB_EXT="dylib"
+              ;;
+          esac
+          ARTIFACT_NAME=$(echo ${{ runner.os }}-${{ runner.arch }}-${{ matrix.node }} | awk '{print tolower($0)}')
+          echo "local_cp=${{ github.workspace }}/java/src/main/java${{ matrix.cp_separator }}${{ github.workspace }}/java/test/java" >> $GITHUB_ENV
+          echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
+          echo "artifact_source=${LIB_PREFIX}ninedb.${LIB_EXT}" >> $GITHUB_OUTPUT
+          echo "artifact_target=${LIB_PREFIX}${{ steps.configure_variables.outputs.artifact_name }}.${LIB_EXT}" >> $GITHUB_OUTPUT
+
       - name: Test
         run: |
-          javac -cp "${{ github.workspace }}/java/src/main/java${{ matrix.cp_separator }}${{ github.workspace }}/java/test/java" java/test/java/io/woutervh/ninedb/Test.java
-          echo "Running tests..."
-          ls -l java/build
-          java -verbose -cp "${{ github.workspace }}/java/src/main/java${{ matrix.cp_separator }}${{ github.workspace }}/java/test/java" -Djava.library.path=java/build io.woutervh.ninedb.Test
-
-      - name: Set artifact name
-        id: artifact_name
-        shell: bash
-        run: echo "artifact_name=$(echo ${{ runner.os }}-${{ runner.arch }}-${{ matrix.node }} | awk '{print tolower($0)}')" >> $GITHUB_OUTPUT
+          javac -cp "${{ steps.configure_variables.outputs.local_cp }}" java/test/java/io/woutervh/ninedb/Test.java
+          java -cp "${{ steps.configure_variables.outputs.local_cp }}" -Djava.library.path=java/build io.woutervh.ninedb.Test
 
       - name: Prepare artifact for upload
-        run: mv java/build/ninedb.${{ matrix.lib_ext }} ${{ steps.artifact_name.outputs.artifact_name }}.${{ matrix.lib_ext }}
+        run: mv java/build/${{ steps.configure_variables.outputs.artifact_source }} ${{ steps.configure_variables.outputs.artifact_target }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.artifact_name.outputs.artifact_name }}
-          path: ${{ steps.artifact_name.outputs.artifact_name }}.${{ matrix.lib_ext }}
+          name: ${{ steps.configure_variables.outputs.artifact_name }}
+          path: ${{ steps.configure_variables.outputs.artifact_target }}
