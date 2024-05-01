@@ -81,7 +81,9 @@ jobs:
       - name: Test
         run: |
           javac -cp "${{ github.workspace }}/java/src/main/java${{ matrix.cp_separator }}${{ github.workspace }}/java/test/java" java/test/java/io/woutervh/ninedb/Test.java
-          java -cp "${{ github.workspace }}/java/src/main/java${{ matrix.cp_separator }}${{ github.workspace }}/java/test/java" -Djava.library.path=java/build io.woutervh.ninedb.Test
+          echo "Running tests..."
+          ls -l java/build
+          java -verbose -cp "${{ github.workspace }}/java/src/main/java${{ matrix.cp_separator }}${{ github.workspace }}/java/test/java" -Djava.library.path=java/build io.woutervh.ninedb.Test
 
       - name: Set artifact name
         id: artifact_name
