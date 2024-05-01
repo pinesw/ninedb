@@ -14,17 +14,14 @@ jobs:
           - java: 11
             architecture: x64
             os: ubuntu-20.04
-            cp_separator: ":"
 
           # - node: 20
           #   architecture: x64
           #   os: windows-2022
-          #   cp_separator: ";"
 
           # - node: 20
           #   architecture: x64
           #   os: macos-14
-          #   cp_separator: ":"
 
     steps:
       - uses: actions/checkout@v4
@@ -81,23 +78,33 @@ jobs:
         run: |
           case ${{ runner.os }} in
             ubuntu*)
+              CP_SEPARATOR=":"
               LIB_PREFIX="lib"
               LIB_EXT="so"
               ;;
             windows*)
+              CP_SEPARATOR=";"
               LIB_PREFIX=""
               LIB_EXT="dll"
               ;;
             macos*)
+              CP_SEPARATOR=":"
               LIB_PREFIX="lib"
               LIB_EXT="dylib"
               ;;
           esac
           ARTIFACT_NAME=$(echo ${{ runner.os }}-${{ runner.arch }}-${{ matrix.node }} | awk '{print tolower($0)}')
-          echo "local_cp=${{ github.workspace }}/java/src/main/java${{ matrix.cp_separator }}${{ github.workspace }}/java/test/java" >> $GITHUB_ENV
+          echo "local_cp=${{ github.workspace }}/java/src/main/java${CP_SEPARATOR}${{ github.workspace }}/java/test/java" >> $GITHUB_OUTPUT
           echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
           echo "artifact_source=${LIB_PREFIX}ninedb.${LIB_EXT}" >> $GITHUB_OUTPUT
           echo "artifact_target=${LIB_PREFIX}${{ steps.configure_variables.outputs.artifact_name }}.${LIB_EXT}" >> $GITHUB_OUTPUT
+
+      - name: Print variables
+        run: |
+          echo "local_cp: ${{ steps.configure_variables.outputs.local_cp }}"
+          echo "artifact_name: ${{ steps.configure_variables.outputs.artifact_name }}"
+          echo "artifact_source: ${{ steps.configure_variables.outputs.artifact_source }}"
+          echo "artifact_target: ${{ steps.configure_variables.outputs.artifact_target }}"
 
       - name: Test
         run: |
