@@ -93,7 +93,7 @@ jobs:
               LIB_EXT="jnilib"
               ;;
           esac
-          ARTIFACT_NAME=$(echo ${{ runner.os }}-${{ runner.arch }}-${{ matrix.java }} | awk '{print tolower($0)}')
+          ARTIFACT_NAME=$(echo ninedb-${{ runner.os }}-${{ runner.arch }}-${{ matrix.java }} | awk '{print tolower($0)}')
           echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
           echo "artifact_source=${LIB_PREFIX}ninedb.${LIB_EXT}" >> $GITHUB_OUTPUT
           echo "artifact_target=${LIB_PREFIX}${ARTIFACT_NAME}.${LIB_EXT}" >> $GITHUB_OUTPUT
@@ -142,7 +142,9 @@ jobs:
       - name: Copy artifacts to target
         run: |
           mkdir -p java/target
-          cp artifacts/*.so artifacts/*.dll artifacts/*.jnilib java/target
+          find artifacts -name '*.so' | xargs -I {} cp {} java/target
+          find artifacts -name '*.dll' | xargs -I {} cp {} java/target
+          find artifacts -name '*.jnilib' | xargs -I {} cp {} java/target
 
       - name: Package jar
         run: |

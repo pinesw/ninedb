@@ -22,7 +22,7 @@
     "install.mjs"
   ],
   "binary": {
-    "url": "https://github.com/woutervh-/ninedb/releases/download/{package_version}/{platform}-{arch}-{node_version}.node",
+    "url": "https://github.com/woutervh-/ninedb/releases/download/{package_version}/ninedb-{platform}-{arch}-{node_version}.node",
     "target": "./ninedb.node"
   }
 }

@@ -82,7 +82,7 @@ jobs:
       - name: Set artifact name
         id: artifact_name
         shell: bash
-        run: echo "artifact_name=$(echo ${{ runner.os }}-${{ runner.arch }}-${{ matrix.node }} | awk '{print tolower($0)}')" >> $GITHUB_OUTPUT
+        run: echo "artifact_name=$(echo ninedb-${{ runner.os }}-${{ runner.arch }}-${{ matrix.node }} | awk '{print tolower($0)}')" >> $GITHUB_OUTPUT
 
       - name: Prepare artifact for upload
         run: mv js/build/ninedb.node ${{ steps.artifact_name.outputs.artifact_name }}.node
@@ -127,7 +127,7 @@ jobs:
           body: |
             This is the release body.
             It can contain multiple lines.
-          draft: false
+          draft: true
           prerelease: false
 
       - uses: actions/setup-node@v4
