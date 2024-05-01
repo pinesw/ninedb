@@ -136,6 +136,9 @@ jobs:
         with:
           path: artifacts
       
+      - name: Print artifacts
+        run: ls -la -R artifacts
+      
       - name: Copy artifacts to target
         run: |
           mkdir -p java/target
