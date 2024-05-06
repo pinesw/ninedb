@@ -90,7 +90,7 @@ jobs:
             macos*)
               CP_SEPARATOR=":"
               LIB_PREFIX="lib"
-              LIB_EXT="jnilib"
+              LIB_EXT="dylib"
               ;;
           esac
           ARTIFACT_NAME=$(echo ninedb-${{ runner.os }}-${{ runner.arch }} | awk '{print tolower($0)}')
@@ -140,6 +140,7 @@ jobs:
           path: artifacts
 
       - name: Print artifacts
+        shell: bash
         run: ls -la -R artifacts
 
       - name: Copy artifacts to target
@@ -147,7 +148,7 @@ jobs:
           mkdir -p java/src/main/resources
           find artifacts -name '*.so' | xargs -I {} cp {} java/src/main/resources
           find artifacts -name '*.dll' | xargs -I {} cp {} java/src/main/resources
-          find artifacts -name '*.jnilib' | xargs -I {} cp {} java/src/main/resources
+          find artifacts -name '*.dylib' | xargs -I {} cp {} java/src/main/resources
 
       - name: Package jar
         run: |

@@ -45,7 +45,7 @@ target_link_libraries(${PROJECT_NAME} Boost::boost lz4::lz4 nlohmann_json::nlohm
 if(WIN32)
     set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".dll")
 elseif(APPLE)
-    set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "lib" SUFFIX ".jnilib")
+    set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "lib" SUFFIX ".dylib")
 elseif(UNIX)
     set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "lib" SUFFIX ".so")
 else()

@@ -64,7 +64,7 @@ class NativeBinding {
         } else if (os.contains("Mac")) {
             prefix = "lib";
             osName = "macos";
-            extension = "jnilib";
+            extension = "dylib";
         } else if (os.contains("Linux")) {
             prefix = "lib";
             osName = "linux";

@@ -2,6 +2,6 @@
 *.so
 *.dll
 *.dylib
-*.jnilib
+*.dylib
 target/
 data/
