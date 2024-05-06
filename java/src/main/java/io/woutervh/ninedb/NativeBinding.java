@@ -7,23 +7,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 class NativeBinding {
-    private static boolean loaded = false;
+    private static boolean copied = false;
 
-    static {
-        try {
-            load();
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-    }
-
-    public static void load() throws IOException {
-        if (loaded) {
-            return;
-        }
-        loaded = true;
-
+    public static void load() {
         if (!isJar()) {
             System.loadLibrary("ninedb");
             return;
@@ -32,14 +18,25 @@ class NativeBinding {
         String libName = getLibName();
         String tempLibPath = getTempLibPath(libName);
 
+        if (!copied) {
+            try {
+                copyLib(libName, tempLibPath);
+                copied = true;
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to copy native library", e);
+            }
+        }
+
+        System.load(tempLibPath);
+    }
+
+    private static void copyLib(String libName, String tempLibPath) throws IOException {
         InputStream ins = NativeBinding.class.getResourceAsStream("/" + libName);
         OutputStream outs = new FileOutputStream(tempLibPath);
 
         ins.transferTo(outs);
         ins.close();
         outs.close();
-
-        System.load(tempLibPath);
     }
 
     private static boolean isJar() {

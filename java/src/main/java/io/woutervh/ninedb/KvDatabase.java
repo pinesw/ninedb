@@ -3,6 +3,10 @@ package io.woutervh.ninedb;
 import java.util.function.Predicate;
 
 public class KvDatabase implements AutoCloseable {
+    static {
+        NativeBinding.load();
+    }
+
     private static native long kvdb_open(String path, DbConfig config);
 
     private static native void kvdb_close(long db_handle);

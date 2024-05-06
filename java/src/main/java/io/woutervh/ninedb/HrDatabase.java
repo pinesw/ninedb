@@ -1,6 +1,10 @@
 package io.woutervh.ninedb;
 
 public class HrDatabase implements AutoCloseable {
+    static {
+        NativeBinding.load();
+    }
+
     private static native long hrdb_open(String path, DbConfig config);
 
     private static native void hrdb_close(long db_handle);
