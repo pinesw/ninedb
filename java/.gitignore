@@ -1,3 +1,7 @@
 *.class
+*.so
+*.dll
+*.dylib
+*.jnilib
 target/
 data/

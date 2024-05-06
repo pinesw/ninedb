@@ -30,9 +30,8 @@
 
         <resources>
             <resource>
-                <directory>${project.build.directory}/native/lib</directory>
+                <directory>src/main/resources</directory>
                 <includes>
-                    <!-- <include>**</include> -->
                     <include>*.dll</include>
                     <include>*.so</include>
                     <include>*.jnilib</include>

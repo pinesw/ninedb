@@ -15,13 +15,13 @@ jobs:
             architecture: x64
             os: ubuntu-20.04
 
-          # - java: 11
-          #   architecture: x64
-          #   os: windows-2022
+          - java: 11
+            architecture: x64
+            os: windows-2022
 
-          # - java: 11
-          #   architecture: x64
-          #   os: macos-14
+          - java: 11
+            architecture: x64
+            os: macos-14
 
     steps:
       - uses: actions/checkout@v4
@@ -93,7 +93,7 @@ jobs:
               LIB_EXT="jnilib"
               ;;
           esac
-          ARTIFACT_NAME=$(echo ninedb-${{ runner.os }}-${{ runner.arch }}-${{ matrix.java }} | awk '{print tolower($0)}')
+          ARTIFACT_NAME=$(echo ninedb-${{ runner.os }}-${{ runner.arch }} | awk '{print tolower($0)}')
           echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
           echo "artifact_source=${LIB_PREFIX}ninedb.${LIB_EXT}" >> $GITHUB_OUTPUT
           echo "artifact_target=${LIB_PREFIX}${ARTIFACT_NAME}.${LIB_EXT}" >> $GITHUB_OUTPUT
@@ -135,24 +135,21 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts
-      
+
       - name: Print artifacts
         run: ls -la -R artifacts
-      
+
       - name: Copy artifacts to target
         run: |
-          mkdir -p java/target
-          find artifacts -name '*.so' | xargs -I {} cp {} java/target
-          find artifacts -name '*.dll' | xargs -I {} cp {} java/target
-          find artifacts -name '*.jnilib' | xargs -I {} cp {} java/target
-
-      - name: List target directory
-        run: ls -la java/target
+          mkdir -p java/src/main/resources
+          find artifacts -name '*.so' | xargs -I {} cp {} java/src/main/resources
+          find artifacts -name '*.dll' | xargs -I {} cp {} java/src/main/resources
+          find artifacts -name '*.jnilib' | xargs -I {} cp {} java/src/main/resources
 
       - name: Package jar
         run: |
-          mvn package -f java/pom.xml
-    
+          mvn clean package -f java/pom.xml
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
