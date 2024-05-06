@@ -9,11 +9,25 @@ import java.io.OutputStream;
 class NativeBinding {
     private static boolean loaded = false;
 
-    static void load() throws IOException {
+    static {
+        try {
+            load();
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
+
+    public static void load() throws IOException {
         if (loaded) {
             return;
         }
         loaded = true;
+
+        if (!isJar()) {
+            System.loadLibrary("ninedb");
+            return;
+        }
 
         String libName = getLibName();
         String tempLibPath = getTempLibPath(libName);
@@ -26,6 +40,11 @@ class NativeBinding {
         outs.close();
 
         System.load(tempLibPath);
+    }
+
+    private static boolean isJar() {
+        String protocol = NativeBinding.class.getResource("NativeBinding.class").getProtocol();
+        return protocol.equals("jar");
     }
 
     private static String getTempLibPath(String libName) {
