@@ -146,6 +146,9 @@ jobs:
           find artifacts -name '*.dll' | xargs -I {} cp {} java/target
           find artifacts -name '*.jnilib' | xargs -I {} cp {} java/target
 
+      - name: List target directory
+        run: ls -la java/target
+
       - name: Package jar
         run: |
           mvn package -f java/pom.xml
