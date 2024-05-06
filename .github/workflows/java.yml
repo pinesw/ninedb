@@ -106,6 +106,9 @@ jobs:
           echo "artifact_source: ${{ steps.configure_variables.outputs.artifact_source }}"
           echo "artifact_target: ${{ steps.configure_variables.outputs.artifact_target }}"
 
+      - name: List files in build directory
+        run: ls -la java/build
+
       - name: Test
         run: |
           javac -cp "${{ steps.configure_variables.outputs.local_cp }}" java/test/java/io/woutervh/ninedb/Test.java
