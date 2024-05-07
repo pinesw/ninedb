@@ -20,6 +20,9 @@ class NativeBinding {
     private static void loadFromLibPath() {
         String javaLibPath = System.getProperty("java.library.path");
         File libFile = new File(javaLibPath, System.mapLibraryName("ninedb"));
+        if (!libFile.exists()) {
+            throw new RuntimeException("Native library not found in java.library.path");
+        }
         System.load(libFile.getAbsolutePath());
     }
 
