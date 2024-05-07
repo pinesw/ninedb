@@ -20,7 +20,7 @@ class NativeBinding {
     private static void loadFromLibPath() {
         String javaLibPath = System.getProperty("java.library.path");
         File libFile = new File(javaLibPath, System.mapLibraryName("ninedb"));
-        System.loadLibrary(libFile.getAbsolutePath());
+        System.load(libFile.getAbsolutePath());
     }
 
     private static void loadFromJar() {
