@@ -107,6 +107,7 @@ jobs:
           echo "artifact_target: ${{ steps.configure_variables.outputs.artifact_target }}"
 
       - name: List files in build directory
+        shell: bash
         run: ls -la java/build
 
       - name: Test
