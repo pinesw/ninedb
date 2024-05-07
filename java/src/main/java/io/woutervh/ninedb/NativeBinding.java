@@ -10,11 +10,20 @@ class NativeBinding {
     private static boolean copied = false;
 
     public static void load() {
-        if (!isJar()) {
-            System.loadLibrary(System.mapLibraryName("ninedb"));
-            return;
+        if (isJar()) {
+            loadFromJar();
+        } else {
+            loadFromLibPath();
         }
+    }
 
+    private static void loadFromLibPath() {
+        String javaLibPath = System.getProperty("java.library.path");
+        File libFile = new File(javaLibPath, System.mapLibraryName("ninedb"));
+        System.loadLibrary(libFile.getAbsolutePath());
+    }
+
+    private static void loadFromJar() {
         String libName = getLibName();
         String tempLibPath = getTempLibPath(libName);
 
