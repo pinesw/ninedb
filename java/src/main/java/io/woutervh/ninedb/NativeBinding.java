@@ -10,6 +10,8 @@ class NativeBinding {
     private static boolean copied = false;
 
     public static void load() {
+        System.out.println("Library name: " + System.mapLibraryName("ninedb"));
+
         if (!isJar()) {
             System.loadLibrary("ninedb");
             return;
