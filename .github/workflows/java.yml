@@ -111,6 +111,7 @@ jobs:
         run: ls -la java/build
 
       - name: Test
+        shell: bash
         run: |
           javac -cp "${{ steps.configure_variables.outputs.local_cp }}" java/test/java/io/woutervh/ninedb/Test.java
           java -cp "${{ steps.configure_variables.outputs.local_cp }}" -Djava.library.path=java/build io.woutervh.ninedb.Test
