@@ -10,10 +10,8 @@ class NativeBinding {
     private static boolean copied = false;
 
     public static void load() {
-        System.out.println("Library name: " + System.mapLibraryName("ninedb"));
-
         if (!isJar()) {
-            System.loadLibrary("ninedb");
+            System.loadLibrary(System.mapLibraryName("ninedb"));
             return;
         }
 
@@ -54,23 +52,15 @@ class NativeBinding {
         String os = System.getProperty("os.name");
         String arch = System.getProperty("os.arch");
 
-        String prefix;
         String osName;
         String archName;
-        String extension;
 
         if (os.contains("Windows")) {
-            prefix = "";
             osName = "windows";
-            extension = "dll";
         } else if (os.contains("Mac")) {
-            prefix = "lib";
             osName = "macos";
-            extension = "dylib";
         } else if (os.contains("Linux")) {
-            prefix = "lib";
             osName = "linux";
-            extension = "so";
         } else {
             throw new RuntimeException("Unsupported OS: " + os);
         }
@@ -83,6 +73,7 @@ class NativeBinding {
             throw new RuntimeException("Unsupported architecture: " + arch);
         }
 
-        return prefix + "ninedb-" + osName + "-" + archName + "." + extension;
+        String libName = System.mapLibraryName("ninedb-" + osName + "-" + archName);
+        return libName;
     }
 }
