@@ -52,7 +52,7 @@ class NativeLoader {
     }
 
     private static boolean isJar() {
-        String protocol = NativeLoader.class.getResource("NativeBinding.class").getProtocol();
+        String protocol = NativeLoader.class.getResource("NativeLoader.class").getProtocol();
         return protocol.equals("jar");
     }
 
