@@ -2,7 +2,7 @@ package io.woutervh.ninedb;
 
 public class KvDbIterator implements AutoCloseable {
     static {
-        NativeBinding.load();
+        NativeLoader.load();
     }
 
     private static native void itr_close(long iterator_handle);

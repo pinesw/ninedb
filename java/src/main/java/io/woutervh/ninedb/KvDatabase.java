@@ -4,7 +4,7 @@ import java.util.function.Predicate;
 
 public class KvDatabase implements AutoCloseable {
     static {
-        NativeBinding.load();
+        NativeLoader.load();
     }
 
     private static native long kvdb_open(String path, DbConfig config);

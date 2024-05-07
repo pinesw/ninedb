@@ -2,7 +2,7 @@ package io.woutervh.ninedb;
 
 public class HrDatabase implements AutoCloseable {
     static {
-        NativeBinding.load();
+        NativeLoader.load();
     }
 
     private static native long hrdb_open(String path, DbConfig config);

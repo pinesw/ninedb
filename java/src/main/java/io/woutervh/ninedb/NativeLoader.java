@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-class NativeBinding {
+class NativeLoader {
     private static boolean copied = false;
 
     public static void load() {
@@ -43,7 +43,7 @@ class NativeBinding {
     }
 
     private static void copyLib(String libName, String tempLibPath) throws IOException {
-        InputStream ins = NativeBinding.class.getResourceAsStream("/" + libName);
+        InputStream ins = NativeLoader.class.getResourceAsStream("/" + libName);
         OutputStream outs = new FileOutputStream(tempLibPath);
 
         ins.transferTo(outs);
@@ -52,7 +52,7 @@ class NativeBinding {
     }
 
     private static boolean isJar() {
-        String protocol = NativeBinding.class.getResource("NativeBinding.class").getProtocol();
+        String protocol = NativeLoader.class.getResource("NativeBinding.class").getProtocol();
         return protocol.equals("jar");
     }
 
