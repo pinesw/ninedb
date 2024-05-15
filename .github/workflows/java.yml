@@ -113,11 +113,8 @@ jobs:
       - name: Test
         shell: bash
         run: |
-          javac -h java/src/main/cpp -cp java/src/main/java java/src/main/java/io/woutervh/ninedb/KvDatabase.java java/src/main/java/io/woutervh/ninedb/KvDbIterator.java java/src/main/java/io/woutervh/ninedb/HrDatabase.java
           javac -cp "${{ steps.configure_variables.outputs.local_cp }}" java/test/java/io/woutervh/ninedb/Test.java
-          ls -la java/src/main/cpp
-          cat java/src/main/cpp/io_woutervh_ninedb_KvDatabase.h
-        #  java -cp "${{ steps.configure_variables.outputs.local_cp }}" -Djava.library.path=java/build io.woutervh.ninedb.Test
+          java -cp "${{ steps.configure_variables.outputs.local_cp }}" -Djava.library.path=java/build io.woutervh.ninedb.Test
 
       - name: Prepare artifact for upload
         run: mv java/build/${{ steps.configure_variables.outputs.artifact_source }} ${{ steps.configure_variables.outputs.artifact_target }}
