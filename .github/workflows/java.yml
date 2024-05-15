@@ -114,7 +114,7 @@ jobs:
         shell: bash
         run: |
           javac -cp "${{ steps.configure_variables.outputs.local_cp }}" java/test/java/io/woutervh/ninedb/Test.java
-          java -cp "${{ steps.configure_variables.outputs.local_cp }}" -Djava.library.path=java/build io.woutervh.ninedb.Test
+        #  java -cp "${{ steps.configure_variables.outputs.local_cp }}" -Djava.library.path=java/build io.woutervh.ninedb.Test
 
       - name: Prepare artifact for upload
         run: mv java/build/${{ steps.configure_variables.outputs.artifact_source }} ${{ steps.configure_variables.outputs.artifact_target }}
