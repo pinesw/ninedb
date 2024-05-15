@@ -18,12 +18,13 @@ class NativeLoader {
     }
 
     private static void loadFromLibPath() {
-        String javaLibPath = System.getProperty("java.library.path");
-        File libFile = new File(javaLibPath, System.mapLibraryName("ninedb"));
-        if (!libFile.exists()) {
-            throw new RuntimeException("Native library not found in java.library.path");
-        }
-        System.load(libFile.getAbsolutePath());
+        System.loadLibrary("ninedb");
+        // String javaLibPath = System.getProperty("java.library.path");
+        // File libFile = new File(javaLibPath, System.mapLibraryName("ninedb"));
+        // if (!libFile.exists()) {
+        //     throw new RuntimeException("Native library not found in java.library.path");
+        // }
+        // System.load(libFile.getAbsolutePath());
     }
 
     private static void loadFromJar() {
