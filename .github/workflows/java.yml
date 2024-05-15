@@ -15,9 +15,9 @@ jobs:
             architecture: x64
             os: ubuntu-20.04
 
-          # - java: 11
-          #   architecture: x64
-          #   os: windows-2022
+          - java: 11
+            architecture: x64
+            os: windows-2022
 
           - java: 11
             architecture: x64
