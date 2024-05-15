@@ -11,9 +11,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # - java: 11
-          #   architecture: x64
-          #   os: ubuntu-20.04
+          - java: 11
+            architecture: x64
+            os: ubuntu-20.04
 
           # - java: 11
           #   architecture: x64
