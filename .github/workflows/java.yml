@@ -29,6 +29,7 @@ jobs:
       - name: Setup Java environment
         uses: actions/setup-java@v4
         with:
+          cache: "maven"
           distribution: "adopt"
           java-version: ${{ matrix.java }}
 
