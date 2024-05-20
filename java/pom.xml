@@ -7,7 +7,7 @@
     <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>NineDB</name>
+    <name>${project.groupId}:${project.artifactId}</name>
     <description>Java bindings for the NineDB database</description>
     <url>https://github.com/woutervh-/ninedb/</url>
 
@@ -19,8 +19,17 @@
         </license>
     </licenses>
 
+    <developers>
+        <developer>
+            <name>Wouter van Heeswijk</name>
+            <email>woutervh@gmail.com</email>
+        </developer>
+    </developers>
+
     <scm>
-        <url>https://github.com/woutervh-/ninedb/</url>
+        <connection>scm:git:git://github.com/woutervh-/ninedb.git</connection>
+        <developerConnection>scm:git:ssh://github.com:woutervh-/ninedb.git</developerConnection>
+        <url>http://github.com/woutervh-/ninedb/tree/master</url>
     </scm>
 
     <properties>
@@ -61,7 +70,8 @@
             </plugin>
 
             <!-- Plugin to add checksums -->
-            <plugin>
+            <!-- Would be taken care of by plugin central-publishing-maven-plugin https://central.sonatype.org/publish/publish-portal-maven/ -->
+            <!-- <plugin>
                 <groupId>net.ju-n.maven.plugins</groupId>
                 <artifactId>checksum-maven-plugin</artifactId>
                 <version>1.4</version>
@@ -81,7 +91,7 @@
                         </fileSet>
                     </fileSets>
                 </configuration>
-            </plugin>
+            </plugin> -->
         </plugins>
 
         <resources>
