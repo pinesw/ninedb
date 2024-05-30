@@ -37,6 +37,13 @@ namespace ninedb::pbt
             read_footer();
         }
 
+        uint64_t get_identifier() const
+        {
+            ZonePbtReader;
+
+            return footer.identifier;
+        }
+
         /**
          * Get the value for the given key.
          * Returns true if the key exists, false otherwise.
@@ -284,7 +291,7 @@ namespace ninedb::pbt
         {
             ZonePbtReader;
 
-            return footer.comrpession != 0;
+            return footer.compression != 0;
         }
 
         void traverse(const std::function<bool(std::string_view value)> &predicate, std::vector<std::string_view> &accumulator, uint64_t offset, uint64_t height)

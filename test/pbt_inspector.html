@@ -267,17 +267,18 @@
         }
 
         function readFooter(view) {
-            const sizeofFooter = 41;
+            const sizeofFooter = 49;
             const offset = view.byteLength - sizeofFooter;
             return {
                 rootOffset: Number(view.getBigUint64(offset, true)),
                 level0End: Number(view.getBigUint64(offset + 8, true)),
                 treeHeight: Number(view.getBigUint64(offset + 16, true)),
-                numEntries: Number(view.getBigInt64(offset + 24, true)),
-                compression: Number(view.getUint8(offset + 32)),
-                versionMajor: Number(view.getUint16(offset + 33, true)),
-                versionMinor: Number(view.getUint16(offset + 35, true)),
-                magic: Number(view.getUint32(offset + 37, true)),
+                identifier: Number(view.getBigUint64(offset + 24, true)),
+                numEntries: Number(view.getBigInt64(offset + 32, true)),
+                compression: Number(view.getUint8(offset + 40)),
+                versionMajor: Number(view.getUint16(offset + 41, true)),
+                versionMinor: Number(view.getUint16(offset + 43, true)),
+                magic: Number(view.getUint32(offset + 45, true)),
             };
         }
 
@@ -367,6 +368,7 @@
                 `rootOffset=${meta.rootOffset}`,
                 `level0End=${meta.level0End}`,
                 `treeHeight=${meta.treeHeight}`,
+                `identifier=${meta.identifier}`,
                 `numEntries=${meta.numEntries}`,
             ];
             return words.join('; ');

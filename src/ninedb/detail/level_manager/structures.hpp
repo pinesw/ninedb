@@ -38,6 +38,7 @@ namespace ninedb::detail::level_manager
         uint32_t version_major;
         uint32_t version_minor;
         uint64_t next_index;
+        uint64_t identity_counter;
         std::vector<LevelState> levels;
     };
 }

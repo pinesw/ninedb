@@ -30,8 +30,8 @@ namespace ninedb::pbt
 {
     struct Writer
     {
-        Writer(const std::string &path, const WriterConfig &config)
-            : config(config)
+        Writer(uint64_t identifier, const std::string &path, const WriterConfig &config)
+            : identifier(identifier), config(config)
         {
             if (std::filesystem::exists(path))
             {
@@ -53,8 +53,8 @@ namespace ninedb::pbt
             init_buffers();
         }
 
-        Writer(const std::shared_ptr<detail::Storage> &storage, const WriterConfig &config)
-            : storage(storage), config(config)
+        Writer(uint64_t identifier, const std::shared_ptr<detail::Storage> &storage, const WriterConfig &config)
+            : identifier(identifier), storage(storage), config(config)
         {
             storage->clear();
             init_buffers();
@@ -177,8 +177,9 @@ namespace ninedb::pbt
             detail::Footer footer = detail::Format::create_footer();
             footer.level_0_end = write_offset;
             footer.tree_height = entry_counts.size();
+            footer.identifier = identifier;
             footer.num_entries = num_entries;
-            footer.comrpession = config.enable_compression ? 1 : 0;
+            footer.compression = config.enable_compression ? 1 : 0;
 
             detail::NodeInternal node_internal;
             std::vector<std::string> keys;
@@ -235,6 +236,7 @@ namespace ninedb::pbt
     private:
         WriterConfig config;
         std::shared_ptr<detail::Storage> storage;
+        uint64_t identifier;
         uint64_t write_offset = 0;
         uint64_t num_entries = 0;
         uint64_t buffer_length = 0;

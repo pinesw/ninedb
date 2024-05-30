@@ -55,6 +55,13 @@ namespace ninedb::detail
             return map.end();
         }
 
+        uint64_t get_count() const
+        {
+            ZoneBuffer;
+
+            return map.size();
+        }
+
     private:
         buffer_map map;
         uint64_t size = 0;

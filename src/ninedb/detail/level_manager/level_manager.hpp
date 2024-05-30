@@ -25,6 +25,7 @@ namespace ninedb::detail::level_manager
             state.version_major = VERSION_MAJOR;
             state.version_minor = VERSION_MINOR;
             state.next_index = 0;
+            state.identity_counter = 0;
 
             LevelManager level_manager(path, state_path, config, state);
 
@@ -63,6 +64,16 @@ namespace ninedb::detail::level_manager
             state.next_index++;
         }
 
+        uint64_t get_identity_counter() const
+        {
+            return state.identity_counter;
+        }
+
+        void set_identity_counter(uint64_t identity_counter)
+        {
+            state.identity_counter = identity_counter;
+        }
+
         void load_state()
         {
             std::ifstream file;
@@ -75,6 +86,7 @@ namespace ninedb::detail::level_manager
             state.version_major = json["version_major"].get<uint32_t>();
             state.version_minor = json["version_minor"].get<uint32_t>();
             state.next_index = json["next_index"].get<uint64_t>();
+            state.identity_counter = json["identity_counter"].get<uint64_t>();
             for (auto &level_json : json["levels"])
             {
                 LevelState level;
@@ -90,6 +102,7 @@ namespace ninedb::detail::level_manager
             json["version_major"] = state.version_major;
             json["version_minor"] = state.version_minor;
             json["next_index"] = state.next_index;
+            json["identity_counter"] = state.identity_counter;
             json["levels"] = nlohmann::json::array();
             for (const auto &level : state.levels)
             {

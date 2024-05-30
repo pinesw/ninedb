@@ -64,5 +64,7 @@
 build/
 node_modules/
 conan_build/
+out/
 CMakeUserPresets.json
+CMakePresets.json
 *.db

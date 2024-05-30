@@ -314,8 +314,9 @@ namespace ninedb
                 return;
             }
 
+            uint64_t num_entries = buffer.get_count();
             std::string file_name = level_manager.get_next_level_0_file_path();
-            pbt::Writer writer(file_name, get_writer_config(config));
+            pbt::Writer writer(level_manager.get_identity_counter(), file_name, get_writer_config(config));
             for (const auto &[key, value] : buffer)
             {
                 writer.add(std::move(key), std::move(value));
@@ -325,6 +326,7 @@ namespace ninedb
 
             level_manager.advance_level_0();
             level_manager.save_state();
+            level_manager.set_identity_counter(level_manager.get_identity_counter() + num_entries);
 
             readers[file_name] = std::make_shared<pbt::Reader>(writer.to_reader(get_reader_config(config)));
         }
@@ -340,8 +342,9 @@ namespace ninedb
                 src_readers.push_back(readers[file_name]);
             }
 
+            uint64_t identifier = src_readers.at(0)->get_identifier();
             std::string target_file_name = level_manager.get_file_path(merge_operation.dst_index, merge_operation.dst_level);
-            pbt::Writer writer(target_file_name, get_writer_config(config));
+            pbt::Writer writer(identifier, target_file_name, get_writer_config(config));
             writer.merge(src_readers);
             writer.finish();
 

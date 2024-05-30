@@ -121,9 +121,11 @@ namespace ninedb::pbt::detail
             address += sizeof(uint64_t);
             *(uint64_t *)(address) = footer.tree_height;
             address += sizeof(uint64_t);
+            *(uint64_t *)(address) = footer.identifier;
+            address += sizeof(uint64_t);
             *(uint64_t *)(address) = footer.num_entries;
             address += sizeof(uint64_t);
-            *(uint8_t *)(address) = footer.comrpession;
+            *(uint8_t *)(address) = footer.compression;
             address += sizeof(uint8_t);
             *(uint16_t *)(address) = footer.version_major;
             address += sizeof(uint16_t);
@@ -276,9 +278,11 @@ namespace ninedb::pbt::detail
             address += sizeof(uint64_t);
             footer.tree_height = *(uint64_t *)address;
             address += sizeof(uint64_t);
+            footer.identifier = *(uint64_t *)address;
+            address += sizeof(uint64_t);
             footer.num_entries = *(uint64_t *)address;
             address += sizeof(uint64_t);
-            footer.comrpession = *(uint8_t *)address;
+            footer.compression = *(uint8_t *)address;
             address += sizeof(uint8_t);
             footer.version_major = *(uint16_t *)address;
             address += sizeof(uint16_t);
