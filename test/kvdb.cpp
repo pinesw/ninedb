@@ -10,10 +10,10 @@
 
 using namespace ninedb;
 
-Config get_test_config()
+Config get_test_config(bool delete_if_exists = true)
 {
     Config config;
-    config.delete_if_exists = true;
+    config.delete_if_exists = delete_if_exists;
     config.max_buffer_size = 1 << 16;
     config.max_level_count = 2;
     config.writer.enable_compression = true;
@@ -289,6 +289,46 @@ void test_iterator_end()
     std::cout << "test_iterator_end done" << std::endl;
 }
 
+void test_reopen()
+{
+    std::vector<std::string> keys;
+    std::vector<std::string> values;
+    generate_keys_sequence(10000, keys);
+    generate_values_sequence(10000, values);
+
+    KvDb db1 = KvDb::open("test_reopen", get_test_config());
+    for (uint64_t i = 0; i < keys.size() / 2; i++)
+    {
+        db1.add(keys[i], values[i]);
+    }
+    db1.flush();
+
+    KvDb db2 = KvDb::open("test_reopen", get_test_config(false));
+    for (uint64_t i = keys.size() / 2; i < keys.size(); i++)
+    {
+        db2.add(keys[i], values[i]);
+    }
+    db2.flush();
+
+    std::string_view value;
+    for (uint64_t i = 0; i < keys.size(); i++)
+    {
+        bool found = db2.get(keys[i], value);
+        if (!found)
+        {
+            std::cout << "not found" << std::endl;
+            exit(1);
+        }
+        if (value != values[i])
+        {
+            std::cout << "value mismatch" << std::endl;
+            exit(1);
+        }
+    }
+
+    std::cout << "test_reopen done" << std::endl;
+}
+
 void benchmark_add()
 {
     std::vector<std::string> keys;
@@ -383,6 +423,7 @@ int main()
     test_iterator_seek_key();
     test_iterator_seek_index();
     test_iterator_end();
+    test_reopen();
 
     // benchmark_add();
     // benchmark_get();

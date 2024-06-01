@@ -333,13 +333,14 @@ namespace ninedb
             ZoneDb;
 
             std::vector<std::shared_ptr<pbt::Reader>> src_readers;
+            uint64_t global_counter = std::numeric_limits<uint64_t>::max();
             for (const auto &[level, index] : merge_operation.src_levels_and_indices)
             {
                 std::string file_name = level_manager.get_file_path(index, level);
                 src_readers.push_back(readers[file_name]);
+                global_counter = std::min(global_counter, readers[file_name]->get_global_counter());
             }
 
-            uint64_t global_counter = src_readers.at(0)->get_global_counter();
             std::string target_file_name = level_manager.get_file_path(merge_operation.dst_index, merge_operation.dst_level);
             pbt::Writer writer(global_counter, target_file_name, get_writer_config(config));
             writer.merge(src_readers);
