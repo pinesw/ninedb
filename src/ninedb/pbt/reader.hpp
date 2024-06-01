@@ -517,11 +517,11 @@ namespace ninedb::pbt
                 uint8_t *address = offset_to_address(offset);
                 if (is_compressed())
                 {
-                    detail::Format::read_node_internal<true>(address, *node);
+                    detail::Format::read_node_internal_compressed(address, *node);
                 }
                 else
                 {
-                    detail::Format::read_node_internal<false>(address, *node);
+                    detail::Format::read_node_internal_uncompressed(address, *node);
                 }
             }
             else
@@ -532,11 +532,11 @@ namespace ninedb::pbt
                     uint8_t *address = offset_to_address(offset);
                     if (is_compressed())
                     {
-                        detail::Format::read_node_internal<true>(address, *node);
+                        detail::Format::read_node_internal_compressed(address, *node);
                     }
                     else
                     {
-                        detail::Format::read_node_internal<false>(address, *node);
+                        detail::Format::read_node_internal_uncompressed(address, *node);
                     }
                     node_internal_cache.put(offset, node);
                 }
@@ -553,11 +553,11 @@ namespace ninedb::pbt
                 uint8_t *address = offset_to_address(offset);
                 if (is_compressed())
                 {
-                    detail::Format::read_node_leaf<true>(address, *node);
+                    detail::Format::read_node_leaf_compressed(address, *node);
                 }
                 else
                 {
-                    detail::Format::read_node_leaf<false>(address, *node);
+                    detail::Format::read_node_leaf_uncompressed(address, *node);
                 }
             }
             else
@@ -568,11 +568,11 @@ namespace ninedb::pbt
                     uint8_t *address = offset_to_address(offset);
                     if (is_compressed())
                     {
-                        detail::Format::read_node_leaf<true>(address, *node);
+                        detail::Format::read_node_leaf_compressed(address, *node);
                     }
                     else
                     {
-                        detail::Format::read_node_leaf<false>(address, *node);
+                        detail::Format::read_node_leaf_uncompressed(address, *node);
                     }
                     node_leaf_cache.put(offset, node);
                 }

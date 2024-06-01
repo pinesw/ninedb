@@ -25,11 +25,11 @@ namespace ninedb::pbt
             {
                 if (is_compressed)
                 {
-                    detail::Format::read_node_leaf<true>(next_address, current_leaf);
+                    detail::Format::read_node_leaf_compressed(next_address, current_leaf);
                 }
                 else
                 {
-                    detail::Format::read_node_leaf<false>(next_address, current_leaf);
+                    detail::Format::read_node_leaf_uncompressed(next_address, current_leaf);
                 }
             }
         }
@@ -94,11 +94,11 @@ namespace ninedb::pbt
                 {
                     if (is_compressed)
                     {
-                        detail::Format::read_node_leaf<true>(next_address, current_leaf);
+                        detail::Format::read_node_leaf_compressed(next_address, current_leaf);
                     }
                     else
                     {
-                        detail::Format::read_node_leaf<false>(next_address, current_leaf);
+                        detail::Format::read_node_leaf_uncompressed(next_address, current_leaf);
                     }
                 }
             }

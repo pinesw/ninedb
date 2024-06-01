@@ -29,6 +29,14 @@ namespace ninedb::pbt::detail
     };
 #pragma pack(pop)
 
+    struct INodeLeaf
+    {
+        virtual uint64_t num_children() const = 0;
+        virtual std::string stem() const = 0;
+        virtual std::string suffix(uint64_t index) const = 0;
+        virtual std::string value(uint64_t index) const = 0;
+    };
+
     struct NodeLeaf
     {
         uint64_t num_children;

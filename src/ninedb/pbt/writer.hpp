@@ -359,13 +359,13 @@ namespace ninedb::pbt
             uint8_t *address = (uint8_t *)storage->get_address() + write_offset;
             if (config.enable_compression)
             {
-                ensure_space(detail::Format::size_upper_bound_node_leaf<true>(node));
-                detail::Format::write_node_leaf<true>(address, node);
+                ensure_space(detail::Format::size_upper_bound_node_leaf_compressed(node));
+                detail::Format::write_node_leaf_compressed(address, node);
             }
             else
             {
-                ensure_space(detail::Format::size_upper_bound_node_leaf<false>(node));
-                detail::Format::write_node_leaf<false>(address, node);
+                ensure_space(detail::Format::size_upper_bound_node_leaf_uncompressed(node));
+                detail::Format::write_node_leaf_uncompressed(address, node);
             }
             write_offset = address_to_offset(address);
         }
@@ -377,13 +377,13 @@ namespace ninedb::pbt
             uint8_t *address = (uint8_t *)storage->get_address() + write_offset;
             if (config.enable_compression)
             {
-                ensure_space(detail::Format::size_upper_bound_node_internal<true>(node));
-                detail::Format::write_node_internal<true>(address, node);
+                ensure_space(detail::Format::size_upper_bound_node_internal_compressed(node));
+                detail::Format::write_node_internal_compressed(address, node);
             }
             else
             {
-                ensure_space(detail::Format::size_upper_bound_node_internal<false>(node));
-                detail::Format::write_node_internal<false>(address, node);
+                ensure_space(detail::Format::size_upper_bound_node_internal_uncompressed(node));
+                detail::Format::write_node_internal_uncompressed(address, node);
             }
             write_offset = address_to_offset(address);
         }
@@ -409,11 +409,11 @@ namespace ninedb::pbt
             detail::NodeLeaf node;
             if (config.enable_compression)
             {
-                detail::Format::read_node_leaf<true>(address, node);
+                detail::Format::read_node_leaf_compressed(address, node);
             }
             else
             {
-                detail::Format::read_node_leaf<false>(address, node);
+                detail::Format::read_node_leaf_uncompressed(address, node);
             }
             num_entries = node.num_children;
             values = std::move(node.values);
@@ -438,11 +438,11 @@ namespace ninedb::pbt
             detail::NodeInternal node;
             if (config.enable_compression)
             {
-                detail::Format::read_node_internal<true>(address, node);
+                detail::Format::read_node_internal_compressed(address, node);
             }
             else
             {
-                detail::Format::read_node_internal<false>(address, node);
+                detail::Format::read_node_internal_uncompressed(address, node);
             }
             num_entries = 0;
             for (uint64_t i = 0; i < node.num_children; i++)
