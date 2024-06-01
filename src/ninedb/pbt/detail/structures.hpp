@@ -16,7 +16,7 @@ namespace ninedb::pbt::detail
         uint64_t tree_height;
 
         // Metadata values.
-        uint64_t identifier;
+        uint64_t global_counter;
         uint64_t num_entries;
         uint8_t compression;
 

@@ -8,10 +8,9 @@
 #include <string>
 #include <vector>
 
-#include <nlohmann/json.hpp>
-
 #include "./structures.hpp"
-#include "../version.hpp"
+
+#include "../../pbt/file_utils.hpp"
 
 namespace ninedb::detail::level_manager
 {
@@ -19,35 +18,16 @@ namespace ninedb::detail::level_manager
     {
         static LevelManager open(const std::string &path, const Config &config)
         {
-            std::string state_path = get_state_path(path);
+            State initial_state;
+            initial_state.next_index = 0;
+            initial_state.global_counter = 0;
+            initial_state.levels = {};
 
-            State state;
-            state.version_major = VERSION_MAJOR;
-            state.version_minor = VERSION_MINOR;
-            state.next_index = 0;
-            state.identity_counter = 0;
-
-            LevelManager level_manager(path, state_path, config, state);
-
-            if (std::filesystem::is_regular_file(state_path))
-            {
-                if (config.error_if_exists)
-                {
-                    throw std::runtime_error("level manager already exists");
-                }
-                if (config.delete_if_exists)
-                {
-                    std::filesystem::remove(state_path);
-                }
-                else
-                {
-                    level_manager.load_state();
-                }
-            }
-            else
+            LevelManager level_manager(path, config, initial_state);
+            level_manager.load_state();
+            if (level_manager.state.levels.empty())
             {
                 level_manager.add_new_level();
-                level_manager.save_state();
             }
 
             return level_manager;
@@ -64,59 +44,52 @@ namespace ninedb::detail::level_manager
             state.next_index++;
         }
 
-        uint64_t get_identity_counter() const
+        uint64_t get_global_counter() const
         {
-            return state.identity_counter;
+            return state.global_counter;
         }
 
-        void set_identity_counter(uint64_t identity_counter)
+        void set_global_counter(uint64_t global_counter)
         {
-            state.identity_counter = identity_counter;
+            state.global_counter = global_counter;
         }
 
         void load_state()
         {
-            std::ifstream file;
-            file.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-            file.open(state_path);
-            nlohmann::json json;
-            file >> json;
-            file.close();
-
-            state.version_major = json["version_major"].get<uint32_t>();
-            state.version_minor = json["version_minor"].get<uint32_t>();
-            state.next_index = json["next_index"].get<uint64_t>();
-            state.identity_counter = json["identity_counter"].get<uint64_t>();
-            for (auto &level_json : json["levels"])
+            std::filesystem::path max_index_file_path;
+            for (const auto &entry : std::filesystem::directory_iterator(path))
             {
-                LevelState level;
-                level.level = level_json["level"];
-                level.indices = level_json["indices"].get<std::vector<uint64_t>>();
-                state.levels.push_back(std::move(level));
-            }
-        }
+                if (!entry.is_regular_file())
+                {
+                    continue;
+                }
 
-        void save_state() const
-        {
-            nlohmann::json json;
-            json["version_major"] = state.version_major;
-            json["version_minor"] = state.version_minor;
-            json["next_index"] = state.next_index;
-            json["identity_counter"] = state.identity_counter;
-            json["levels"] = nlohmann::json::array();
-            for (const auto &level : state.levels)
+                std::string file_name = entry.path().filename().string();
+                uint64_t index, level;
+                parse_file_path(file_name, index, level);
+
+                if (index >= state.next_index)
+                {
+                    max_index_file_path = entry.path();
+                    state.next_index = index + 1;
+                }
+                while (level >= state.levels.size())
+                {
+                    add_new_level();
+                }
+                state.levels[level].indices.push_back(index);
+            }
+            if (state.levels.empty())
             {
-                nlohmann::json level_json;
-                level_json["level"] = level.level;
-                level_json["indices"] = level.indices;
-                json["levels"].push_back(std::move(level_json));
+                add_new_level();
+                return;
             }
-
-            std::ofstream file;
-            file.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-            file.open(state_path);
-            file << json;
-            file.close();
+            for (auto &level : state.levels)
+            {
+                std::sort(level.indices.begin(), level.indices.end());
+            }
+            auto footer = pbt::read_footer(max_index_file_path);
+            state.global_counter = footer.global_counter + footer.num_entries;
         }
 
         std::vector<std::string> get_unmerged_files() const
@@ -202,6 +175,17 @@ namespace ninedb::detail::level_manager
             return path + "/" + index_name_padded + "-" + level_name_padded + ".pbt";
         }
 
+        void parse_file_path(const std::string &file_path, uint64_t &index, uint64_t &level) const
+        {
+            std::string file_name = std::filesystem::path(file_path).filename().string();
+            if (file_name.size() != 33 || file_name[20] != '-')
+            {
+                throw std::runtime_error("Invalid file name: " + file_name);
+            }
+            index = std::stoull(file_name.substr(0, 20));
+            level = std::stoull(file_name.substr(21, 8));
+        }
+
         void apply_merge_operation(const MergeOperation &merge_operation)
         {
             while (merge_operation.dst_level >= state.levels.size())
@@ -224,15 +208,9 @@ namespace ninedb::detail::level_manager
         Config config;
         State state;
         std::string path;
-        std::string state_path;
 
-        LevelManager(const std::string &path, const std::string &state_path, const Config &config, const State &state)
-            : path(path), state_path(state_path), config(config), state(state) {}
-
-        static std::string get_state_path(const std::string &path)
-        {
-            return path + "/state.json";
-        }
+        LevelManager(const std::string &path, const Config &config, const State &state)
+            : path(path), config(config), state(state) {}
 
         bool should_merge_level(uint64_t level, bool plus_one) const
         {

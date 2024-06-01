@@ -10,6 +10,8 @@
 
 - Make reader/iterator thread safe?
 
+- Reduce function/class templating?
+
 - Add a thread to writer to do the flushing so user can continue writing another buffer?
 
 - If config is such that there is no compression/caching/whatever, then drop the cache and read directly from mmap when using the PBT.

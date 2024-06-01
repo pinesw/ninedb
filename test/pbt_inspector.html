@@ -273,7 +273,7 @@
                 rootOffset: Number(view.getBigUint64(offset, true)),
                 level0End: Number(view.getBigUint64(offset + 8, true)),
                 treeHeight: Number(view.getBigUint64(offset + 16, true)),
-                identifier: Number(view.getBigUint64(offset + 24, true)),
+                globalCounter: Number(view.getBigUint64(offset + 24, true)),
                 numEntries: Number(view.getBigInt64(offset + 32, true)),
                 compression: Number(view.getUint8(offset + 40)),
                 versionMajor: Number(view.getUint16(offset + 41, true)),
@@ -368,7 +368,7 @@
                 `rootOffset=${meta.rootOffset}`,
                 `level0End=${meta.level0End}`,
                 `treeHeight=${meta.treeHeight}`,
-                `identifier=${meta.identifier}`,
+                `globalCounter=${meta.globalCounter}`,
                 `numEntries=${meta.numEntries}`,
             ];
             return words.join('; ');

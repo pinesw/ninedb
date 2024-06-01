@@ -8,10 +8,6 @@ namespace ninedb::detail::level_manager
     struct Config
     {
         uint64_t max_level_count = 10;
-
-        bool error_if_exists = false;
-
-        bool delete_if_exists = true;
     };
 
     struct LevelAndIndex
@@ -35,10 +31,8 @@ namespace ninedb::detail::level_manager
 
     struct State
     {
-        uint32_t version_major;
-        uint32_t version_minor;
         uint64_t next_index;
-        uint64_t identity_counter;
+        uint64_t global_counter;
         std::vector<LevelState> levels;
     };
 }

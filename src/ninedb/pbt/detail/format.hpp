@@ -13,6 +13,9 @@
 
 namespace ninedb::pbt::detail
 {
+    constexpr uint32_t VERSION_MAJOR = 0;
+    constexpr uint32_t VERSION_MINOR = 1;
+
     struct Format
     {
         static const uint32_t MAGIC = 0x1EAF1111;
@@ -25,11 +28,11 @@ namespace ninedb::pbt::detail
             {
                 throw std::runtime_error("Invalid magic number");
             }
-            if (footer.version_major != ninedb::detail::VERSION_MAJOR)
+            if (footer.version_major != VERSION_MAJOR)
             {
                 throw std::runtime_error("Invalid major version");
             }
-            if (footer.version_minor != ninedb::detail::VERSION_MINOR)
+            if (footer.version_minor != VERSION_MINOR)
             {
                 throw std::runtime_error("Invalid minor version");
             }
@@ -40,8 +43,8 @@ namespace ninedb::pbt::detail
             ZonePbtFormat;
 
             Footer footer;
-            footer.version_major = ninedb::detail::VERSION_MAJOR;
-            footer.version_minor = ninedb::detail::VERSION_MINOR;
+            footer.version_major = VERSION_MAJOR;
+            footer.version_minor = VERSION_MINOR;
             footer.magic = MAGIC;
             return footer;
         }
@@ -121,7 +124,7 @@ namespace ninedb::pbt::detail
             address += sizeof(uint64_t);
             *(uint64_t *)(address) = footer.tree_height;
             address += sizeof(uint64_t);
-            *(uint64_t *)(address) = footer.identifier;
+            *(uint64_t *)(address) = footer.global_counter;
             address += sizeof(uint64_t);
             *(uint64_t *)(address) = footer.num_entries;
             address += sizeof(uint64_t);
@@ -278,7 +281,7 @@ namespace ninedb::pbt::detail
             address += sizeof(uint64_t);
             footer.tree_height = *(uint64_t *)address;
             address += sizeof(uint64_t);
-            footer.identifier = *(uint64_t *)address;
+            footer.global_counter = *(uint64_t *)address;
             address += sizeof(uint64_t);
             footer.num_entries = *(uint64_t *)address;
             address += sizeof(uint64_t);

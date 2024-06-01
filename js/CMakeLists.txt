@@ -27,13 +27,12 @@ list(APPEND CMAKE_MODULE_PATH ${CONAN_PATH})
 list(APPEND CMAKE_PREFIX_PATH ${CONAN_PATH})
 set(CMAKE_FIND_PACKAGE_PREFER_CONFIG TRUE)
 find_package(Boost REQUIRED)
-find_package(nlohmann_json REQUIRED)
 find_package(lz4 REQUIRED)
 
 # Set up the target
 add_library(${PROJECT_NAME} SHARED ${CMAKE_CURRENT_SOURCE_DIR}/binding.cpp)
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
-target_link_libraries(${PROJECT_NAME} Boost::boost lz4::lz4 nlohmann_json::nlohmann_json)
+target_link_libraries(${PROJECT_NAME} Boost::boost lz4::lz4)
 
 # Link node_api.lib on Windows
 if(MSVC)

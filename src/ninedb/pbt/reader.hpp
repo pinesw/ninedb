@@ -37,11 +37,11 @@ namespace ninedb::pbt
             read_footer();
         }
 
-        uint64_t get_identifier() const
+        uint64_t get_global_counter() const
         {
             ZonePbtReader;
 
-            return footer.identifier;
+            return footer.global_counter;
         }
 
         /**

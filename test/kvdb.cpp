@@ -13,6 +13,7 @@ using namespace ninedb;
 Config get_test_config()
 {
     Config config;
+    config.delete_if_exists = true;
     config.max_buffer_size = 1 << 16;
     config.max_level_count = 2;
     config.writer.enable_compression = true;
@@ -23,6 +24,7 @@ Config get_test_config()
 Config get_benchmark_config()
 {
     Config config;
+    config.delete_if_exists = true;
     // config.writer.max_node_entries = 16;
     config.writer.enable_compression = true;
     config.writer.enable_prefix_encoding = true;
