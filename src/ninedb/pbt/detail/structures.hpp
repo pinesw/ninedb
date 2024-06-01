@@ -29,6 +29,7 @@ namespace ninedb::pbt::detail
     };
 #pragma pack(pop)
 
+    // TODO: use some abstract interface that can read data directly from the mmap.
     struct INodeLeaf
     {
         virtual uint64_t num_children() const = 0;
