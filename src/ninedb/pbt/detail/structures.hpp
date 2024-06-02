@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -28,15 +29,6 @@ namespace ninedb::pbt::detail
         uint32_t magic;
     };
 #pragma pack(pop)
-
-    // TODO: use some abstract interface that can read data directly from the mmap.
-    struct INodeLeaf
-    {
-        virtual uint64_t num_children() const = 0;
-        virtual std::string stem() const = 0;
-        virtual std::string suffix(uint64_t index) const = 0;
-        virtual std::string value(uint64_t index) const = 0;
-    };
 
     struct NodeLeaf
     {

@@ -258,6 +258,11 @@
             return { value, length };
         }
 
+        function readStringOnly(view, offset, length) {
+            const value = view.buffer.slice(offset, offset + length);
+            return { value, length };
+        }
+
         function readString(view, offset) {
             const length = readVarInt(view, offset);
             offset += length.length;
@@ -314,14 +319,29 @@
                 node.suffixes = [];
                 node.values = [];
 
+                const suffixLengths = [];
                 for (let i = 0; i < numChildren.value; i++) {
-                    const { value: suffix, length: suffixLength } = readString(nodeView, offset);
-                    offset += suffixLength;
+                    const { value: suffixLength, length } = readVarInt(nodeView, offset);
+                    offset += length;
+                    suffixLengths.push(suffixLength);
+                }
 
-                    const { value, length: valueLength } = readString(nodeView, offset);
-                    offset += valueLength;
+                const valueLengths = [];
+                for (let i = 0; i < numChildren.value; i++) {
+                    const { value: valueLength, length } = readVarInt(nodeView, offset);
+                    offset += length;
+                    valueLengths.push(valueLength);
+                }
 
+                for (let i = 0; i < numChildren.value; i++) {
+                    const { value: suffix, length: suffixLength } = readStringOnly(nodeView, offset, suffixLengths[i]);
+                    offset += suffixLengths[i];
                     node.suffixes.push(suffix);
+                }
+
+                for (let i = 0; i < numChildren.value; i++) {
+                    const { value, length: valueLength } = readStringOnly(nodeView, offset, valueLengths[i]);
+                    offset += valueLengths[i];
                     node.values.push(value);
                 }
             } else {

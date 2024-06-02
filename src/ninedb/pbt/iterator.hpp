@@ -14,7 +14,7 @@ namespace ninedb::pbt
     struct Iterator
     {
         Iterator(const std::shared_ptr<detail::Storage> &storage, bool is_compressed, uint64_t index, uint64_t offset, uint64_t end_offset)
-            : storage(storage), is_compressed(is_compressed), current_index(index)
+            : storage(storage), current_leaf(std::make_shared<detail::NodeLeafShallow>()), is_compressed(is_compressed), current_index(index)
         {
             ZonePbtIterator;
 
@@ -25,11 +25,11 @@ namespace ninedb::pbt
             {
                 if (is_compressed)
                 {
-                    detail::Format::read_node_leaf_compressed(next_address, current_leaf);
+                    detail::Format::read_node_leaf_compressed(next_address, *current_leaf);
                 }
                 else
                 {
-                    detail::Format::read_node_leaf_uncompressed(next_address, current_leaf);
+                    detail::Format::read_node_leaf_uncompressed(next_address, *current_leaf);
                 }
             }
         }
@@ -41,9 +41,10 @@ namespace ninedb::pbt
         {
             ZonePbtIterator;
 
-            key.resize(current_leaf.stem.size() + current_leaf.suffixes[current_index].size());
-            key.replace(0, current_leaf.stem.size(), current_leaf.stem);
-            key.replace(current_leaf.stem.size(), current_leaf.suffixes[current_index].size(), current_leaf.suffixes[current_index]);
+            std::string_view suffix = current_leaf->suffix(current_index);
+            key.resize(current_leaf->stem.size() + suffix.size());
+            key.replace(0, current_leaf->stem.size(), current_leaf->stem);
+            key.replace(current_leaf->stem.size(), suffix.size(), suffix);
         }
 
         /**
@@ -65,7 +66,7 @@ namespace ninedb::pbt
         {
             ZonePbtIterator;
 
-            value = current_leaf.values[current_index];
+            value = current_leaf->value(current_index);
         }
 
         /**
@@ -75,7 +76,7 @@ namespace ninedb::pbt
         {
             ZonePbtIterator;
 
-            return current_leaf.values[current_index];
+            return current_leaf->value(current_index);
         }
 
         /**
@@ -86,7 +87,7 @@ namespace ninedb::pbt
             ZonePbtIterator;
 
             current_index++;
-            if (current_index >= current_leaf.num_children)
+            if (current_index >= current_leaf->num_children)
             {
                 current_index = 0;
                 current_address = next_address;
@@ -94,11 +95,11 @@ namespace ninedb::pbt
                 {
                     if (is_compressed)
                     {
-                        detail::Format::read_node_leaf_compressed(next_address, current_leaf);
+                        detail::Format::read_node_leaf_compressed(next_address, *current_leaf);
                     }
                     else
                     {
-                        detail::Format::read_node_leaf_uncompressed(next_address, current_leaf);
+                        detail::Format::read_node_leaf_uncompressed(next_address, *current_leaf);
                     }
                 }
             }
@@ -116,8 +117,8 @@ namespace ninedb::pbt
 
     private:
         std::shared_ptr<detail::Storage> storage;
+        std::shared_ptr<detail::NodeLeafShallow> current_leaf;
         bool is_compressed;
-        detail::NodeLeaf current_leaf;
         uint64_t current_index;
         uint8_t *current_address;
         uint8_t *next_address;

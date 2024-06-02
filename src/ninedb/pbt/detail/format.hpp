@@ -16,6 +16,19 @@ namespace ninedb::pbt::detail
     constexpr uint32_t VERSION_MAJOR = 0;
     constexpr uint32_t VERSION_MINOR = 1;
 
+    struct NodeLeafShallow
+    {
+        std::unique_ptr<uint8_t[]> data;
+        uint64_t num_children;
+        std::string stem;
+        uint8_t *strings_address;
+        std::unique_ptr<uint64_t[]> string_offsets;
+
+        void read_node_leaf_header(uint8_t *&address);
+        std::string_view suffix(uint64_t index) const;
+        std::string_view value(uint64_t index) const;
+    };
+
     struct Format
     {
         static const uint32_t MAGIC = 0x1EAF1111;
@@ -165,6 +178,14 @@ namespace ninedb::pbt::detail
             address += value.size();
         }
 
+        static void write_string_data_only(uint8_t *&address, std::string_view value)
+        {
+            ZonePbtFormat;
+
+            memcpy(address, value.data(), value.size());
+            address += value.size();
+        }
+
         static void write_data_compressed(uint8_t *&address, const uint8_t *data, uint64_t size)
         {
             ZonePbtFormat;
@@ -190,6 +211,30 @@ namespace ninedb::pbt::detail
             address += compressed_size;
         }
 
+        // static void write_node_leaf_uncompressed(uint8_t *&address, const NodeLeaf &node)
+        // {
+        //     ZonePbtFormat;
+
+        //     write_varint64(address, node.num_children);
+        //     write_string(address, node.stem);
+        //     for (uint64_t i = 0; i < node.num_children; i++)
+        //     {
+        //         write_string(address, node.suffixes[i]);
+        //         write_string(address, node.values[i]);
+        //     }
+        // }
+
+        // static void write_node_leaf_compressed(uint8_t *&address, const NodeLeaf &node)
+        // {
+        //     ZonePbtFormat;
+
+        //     std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(size_upper_bound_node_leaf_uncompressed(node));
+        //     uint8_t *buffer_address = buffer.get();
+        //     write_node_leaf_uncompressed(buffer_address, node);
+        //     uint64_t size = buffer_address - buffer.get();
+        //     write_data_compressed(address, buffer.get(), size);
+        // }
+
         static void write_node_leaf_uncompressed(uint8_t *&address, const NodeLeaf &node)
         {
             ZonePbtFormat;
@@ -198,8 +243,19 @@ namespace ninedb::pbt::detail
             write_string(address, node.stem);
             for (uint64_t i = 0; i < node.num_children; i++)
             {
-                write_string(address, node.suffixes[i]);
-                write_string(address, node.values[i]);
+                write_varint64(address, node.suffixes[i].size());
+            }
+            for (uint64_t i = 0; i < node.num_children; i++)
+            {
+                write_varint64(address, node.values[i].size());
+            }
+            for (uint64_t i = 0; i < node.num_children; i++)
+            {
+                write_string_data_only(address, node.suffixes[i]);
+            }
+            for (uint64_t i = 0; i < node.num_children; i++)
+            {
+                write_string_data_only(address, node.values[i]);
             }
         }
 
@@ -324,22 +380,40 @@ namespace ninedb::pbt::detail
             address += string_size;
         }
 
-        static void read_node_leaf_uncompressed(uint8_t *&address, NodeLeaf &node)
+        // static void read_node_leaf_uncompressed(uint8_t *&address, NodeLeaf &node)
+        // {
+        //     ZonePbtFormat;
+
+        //     node.num_children = read_varint64(address);
+        //     read_string(address, node.stem);
+        //     node.suffixes.resize(node.num_children);
+        //     node.values.resize(node.num_children);
+        //     for (uint64_t i = 0; i < node.num_children; i++)
+        //     {
+        //         read_string(address, node.suffixes[i]);
+        //         read_string(address, node.values[i]);
+        //     }
+        // }
+
+        // static void read_node_leaf_compressed(uint8_t *&address, NodeLeaf &node)
+        // {
+        //     ZonePbtFormat;
+
+        //     std::unique_ptr<uint8_t[]> buffer;
+        //     uint64_t size;
+        //     read_data_compressed(address, buffer, size);
+        //     uint8_t *buffer_address = buffer.get();
+        //     read_node_leaf_uncompressed(buffer_address, node);
+        // }
+
+        static void read_node_leaf_uncompressed(uint8_t *&address, NodeLeafShallow &node)
         {
             ZonePbtFormat;
 
-            node.num_children = read_varint64(address);
-            read_string(address, node.stem);
-            node.suffixes.resize(node.num_children);
-            node.values.resize(node.num_children);
-            for (uint64_t i = 0; i < node.num_children; i++)
-            {
-                read_string(address, node.suffixes[i]);
-                read_string(address, node.values[i]);
-            }
+            node.read_node_leaf_header(address);
         }
 
-        static void read_node_leaf_compressed(uint8_t *&address, NodeLeaf &node)
+        static void read_node_leaf_compressed(uint8_t *&address, NodeLeafShallow &node)
         {
             ZonePbtFormat;
 
@@ -348,6 +422,7 @@ namespace ninedb::pbt::detail
             read_data_compressed(address, buffer, size);
             uint8_t *buffer_address = buffer.get();
             read_node_leaf_uncompressed(buffer_address, node);
+            node.data = std::move(buffer);
         }
 
         static void read_node_internal_uncompressed(uint8_t *&address, NodeInternal &node)
@@ -381,4 +456,38 @@ namespace ninedb::pbt::detail
             read_node_internal_uncompressed(buffer_address, node);
         }
     };
+
+    void NodeLeafShallow::read_node_leaf_header(uint8_t *&address)
+    {
+        num_children = Format::read_varint64(address);
+        Format::read_string(address, stem);
+        string_offsets = std::make_unique<uint64_t[]>(2 * num_children);
+        for (uint64_t i = 0; i < 2 * num_children; i++)
+        {
+            string_offsets[i] = Format::read_varint64(address);
+            if (i > 0)
+            {
+                string_offsets[i] += string_offsets[i - 1];
+            }
+        }
+        strings_address = address;
+        address += string_offsets[2 * num_children - 1];
+    }
+
+    std::string_view NodeLeafShallow::suffix(uint64_t index) const
+    {
+        if (index == 0)
+        {
+            return std::string_view((char *)strings_address, string_offsets[0]);
+        }
+        else
+        {
+            return std::string_view((char *)strings_address + string_offsets[index - 1], string_offsets[index] - string_offsets[index - 1]);
+        }
+    }
+
+    std::string_view NodeLeafShallow::value(uint64_t index) const
+    {
+        return std::string_view((char *)strings_address + string_offsets[num_children + index - 1], string_offsets[num_children + index] - string_offsets[num_children + index - 1]);
+    }
 }
