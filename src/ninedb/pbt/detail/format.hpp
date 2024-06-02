@@ -29,6 +29,10 @@ namespace ninedb::pbt::detail
         std::string_view value(uint64_t index) const;
     };
 
+    struct NodeInternalShallow
+    {
+    };
+
     struct Format
     {
         static const uint32_t MAGIC = 0x1EAF1111;
@@ -211,30 +215,6 @@ namespace ninedb::pbt::detail
             address += compressed_size;
         }
 
-        // static void write_node_leaf_uncompressed(uint8_t *&address, const NodeLeaf &node)
-        // {
-        //     ZonePbtFormat;
-
-        //     write_varint64(address, node.num_children);
-        //     write_string(address, node.stem);
-        //     for (uint64_t i = 0; i < node.num_children; i++)
-        //     {
-        //         write_string(address, node.suffixes[i]);
-        //         write_string(address, node.values[i]);
-        //     }
-        // }
-
-        // static void write_node_leaf_compressed(uint8_t *&address, const NodeLeaf &node)
-        // {
-        //     ZonePbtFormat;
-
-        //     std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(size_upper_bound_node_leaf_uncompressed(node));
-        //     uint8_t *buffer_address = buffer.get();
-        //     write_node_leaf_uncompressed(buffer_address, node);
-        //     uint64_t size = buffer_address - buffer.get();
-        //     write_data_compressed(address, buffer.get(), size);
-        // }
-
         static void write_node_leaf_uncompressed(uint8_t *&address, const NodeLeaf &node)
         {
             ZonePbtFormat;
@@ -270,20 +250,38 @@ namespace ninedb::pbt::detail
             write_data_compressed(address, buffer.get(), size);
         }
 
+        // static void write_node_internal_uncompressed(uint8_t *&address, const NodeInternal &node)
+        // {
+        //     ZonePbtFormat;
+
+        //     write_varint64(address, node.num_children);
+        //     write_string(address, node.stem);
+        //     for (uint64_t i = 0; i < node.num_children; i++)
+        //     {
+        //         write_string(address, node.suffixes[i]);
+        //         write_string(address, node.reduced_values[i]);
+        //         write_uint64(address, node.offsets[i]);
+        //         write_varint64(address, node.num_entries[i]);
+        //     }
+        //     write_string(address, node.suffixes[node.num_children]);
+        // }
+
+        // static void write_node_internal_compressed(uint8_t *&address, const NodeInternal &node)
+        // {
+        //     ZonePbtFormat;
+
+        //     std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(size_upper_bound_node_internal_uncompressed(node));
+        //     uint8_t *buffer_address = buffer.get();
+        //     write_node_internal_uncompressed(buffer_address, node);
+        //     uint64_t size = buffer_address - buffer.get();
+        //     write_data_compressed(address, buffer.get(), size);
+        // }
+
         static void write_node_internal_uncompressed(uint8_t *&address, const NodeInternal &node)
         {
             ZonePbtFormat;
 
-            write_varint64(address, node.num_children);
-            write_string(address, node.stem);
-            for (uint64_t i = 0; i < node.num_children; i++)
-            {
-                write_string(address, node.suffixes[i]);
-                write_string(address, node.reduced_values[i]);
-                write_uint64(address, node.offsets[i]);
-                write_varint64(address, node.num_entries[i]);
-            }
-            write_string(address, node.suffixes[node.num_children]);
+            // TODO: Implement
         }
 
         static void write_node_internal_compressed(uint8_t *&address, const NodeInternal &node)
@@ -380,32 +378,6 @@ namespace ninedb::pbt::detail
             address += string_size;
         }
 
-        // static void read_node_leaf_uncompressed(uint8_t *&address, NodeLeaf &node)
-        // {
-        //     ZonePbtFormat;
-
-        //     node.num_children = read_varint64(address);
-        //     read_string(address, node.stem);
-        //     node.suffixes.resize(node.num_children);
-        //     node.values.resize(node.num_children);
-        //     for (uint64_t i = 0; i < node.num_children; i++)
-        //     {
-        //         read_string(address, node.suffixes[i]);
-        //         read_string(address, node.values[i]);
-        //     }
-        // }
-
-        // static void read_node_leaf_compressed(uint8_t *&address, NodeLeaf &node)
-        // {
-        //     ZonePbtFormat;
-
-        //     std::unique_ptr<uint8_t[]> buffer;
-        //     uint64_t size;
-        //     read_data_compressed(address, buffer, size);
-        //     uint8_t *buffer_address = buffer.get();
-        //     read_node_leaf_uncompressed(buffer_address, node);
-        // }
-
         static void read_node_leaf_uncompressed(uint8_t *&address, NodeLeafShallow &node)
         {
             ZonePbtFormat;
@@ -425,7 +397,7 @@ namespace ninedb::pbt::detail
             node.data = std::move(buffer);
         }
 
-        static void read_node_internal_uncompressed(uint8_t *&address, NodeInternal &node)
+        static void read_node_internal_uncompressed(uint8_t *&address, NodeInternalShallow &node)
         {
             ZonePbtFormat;
 
@@ -445,7 +417,7 @@ namespace ninedb::pbt::detail
             read_string(address, node.suffixes[node.num_children]);
         }
 
-        static void read_node_internal_compressed(uint8_t *&address, NodeInternal &node)
+        static void read_node_internal_compressed(uint8_t *&address, NodeInternalShallow &node)
         {
             ZonePbtFormat;
 
