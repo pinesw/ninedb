@@ -352,28 +352,44 @@
                 node.children = [];
 
                 for (let i = 0; i < numChildren.value; i++) {
-                    const { value: suffix, length: suffixLength } = readString(nodeView, offset);
-                    offset += suffixLength;
-
-                    const { value: reducedValue, length: reducedValueLength } = readString(nodeView, offset);
-                    offset += reducedValueLength;
-
                     const childOffset = Number(nodeView.getBigUint64(offset, true));
                     offset += 8;
 
+                    node.offsets.push(childOffset);
+                }
+
+                for (let i = 0; i < numChildren.value; i++) {
                     const { length: numEntriesLength, value: numEntries } = readVarInt(nodeView, offset);
                     offset += numEntriesLength;
 
-                    node.suffixes.push(suffix);
-                    node.reducedValues.push(reducedValue);
-                    node.offsets.push(childOffset);
                     node.numEntries.push(numEntries);
                 }
 
-                const { value: suffix, length: suffixLength } = readString(nodeView, offset);
-                offset += suffixLength;
+                const suffixLengths = [];
+                for (let i = 0; i < numChildren.value + 1; i++) {
+                    const { value: suffixLength, length } = readVarInt(nodeView, offset);
+                    offset += length;
+                    suffixLengths.push(suffixLength);
+                }
 
-                node.suffixes.push(suffix);
+                const reducedValueLengths = [];
+                for (let i = 0; i < numChildren.value; i++) {
+                    const { value: valueLength, length } = readVarInt(nodeView, offset);
+                    offset += length;
+                    reducedValueLengths.push(valueLength);
+                }
+
+                for (let i = 0; i < numChildren.value + 1; i++) {
+                    const { value: suffix, length: suffixLength } = readStringOnly(nodeView, offset, suffixLengths[i]);
+                    offset += suffixLengths[i];
+                    node.suffixes.push(suffix);
+                }
+
+                for (let i = 0; i < numChildren.value; i++) {
+                    const { value: reducedValue, length: reducedValueLength } = readStringOnly(nodeView, offset, reducedValueLengths[i]);
+                    offset += reducedValueLengths[i];
+                    node.reducedValues.push(reducedValue);
+                }
 
                 for (let i = 0; i < numChildren.value; i++) {
                     node.children.push(readTree(view, meta, node.offsets[i], height - 1));

@@ -439,7 +439,7 @@ namespace ninedb::pbt
 
         void read_node_internal_metadata(uint8_t *&address, uint64_t &num_entries, std::vector<std::string> &values, std::string *first_key, std::string *last_key) const
         {
-            detail::NodeInternal node;
+            detail::NodeInternalShallow node;
             if (config.enable_compression)
             {
                 detail::Format::read_node_internal_compressed(address, node);
@@ -453,17 +453,21 @@ namespace ninedb::pbt
             {
                 num_entries += node.num_entries[i];
             }
-            values = std::move(node.reduced_values);
+            values.resize(num_entries);
+            for (uint64_t i = 0; i < node.num_children; i++)
+            {
+                values[i] = node.reduced_value(i);
+            }
             if (first_key != nullptr)
             {
-                std::string_view first_key_suffix = node.suffixes[0];
+                std::string_view first_key_suffix = node.suffix(0);
                 first_key->resize(node.stem.size() + first_key_suffix.size());
                 first_key->replace(0, node.stem.size(), node.stem);
                 first_key->replace(node.stem.size(), first_key_suffix.size(), first_key_suffix);
             }
             if (last_key != nullptr)
             {
-                std::string_view last_key_suffix = node.suffixes[node.num_children];
+                std::string_view last_key_suffix = node.suffix(node.num_children);
                 last_key->resize(node.stem.size() + last_key_suffix.size());
                 last_key->replace(0, node.stem.size(), node.stem);
                 last_key->replace(node.stem.size(), last_key_suffix.size(), last_key_suffix);

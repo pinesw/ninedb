@@ -284,7 +284,7 @@ namespace ninedb::pbt
         ReaderConfig config;
         detail::Footer footer;
         std::shared_ptr<detail::Storage> storage;
-        ninedb::detail::RLRUCache<uint64_t, std::shared_ptr<detail::NodeInternal>> node_internal_cache;
+        ninedb::detail::RLRUCache<uint64_t, std::shared_ptr<detail::NodeInternalShallow>> node_internal_cache;
         ninedb::detail::RLRUCache<uint64_t, std::shared_ptr<detail::NodeLeafShallow>> node_leaf_cache;
 
         bool is_compressed() const
@@ -313,12 +313,12 @@ namespace ninedb::pbt
             }
             else
             {
-                std::shared_ptr<detail::NodeInternal> node_internal;
+                std::shared_ptr<detail::NodeInternalShallow> node_internal;
                 get_node_internal(offset, node_internal);
 
                 for (uint64_t i = 0; i < node_internal->num_children; i++)
                 {
-                    if (predicate(node_internal->reduced_values[i]))
+                    if (predicate(node_internal->reduced_value(i)))
                     {
                         traverse(predicate, accumulator, node_internal->offsets[i], height - 1);
                     }
@@ -333,7 +333,7 @@ namespace ninedb::pbt
             uint64_t offset = footer.root_offset;
             uint64_t height = footer.tree_height;
 
-            std::shared_ptr<detail::NodeInternal> node_internal;
+            std::shared_ptr<detail::NodeInternalShallow> node_internal;
 
             while (height >= 2)
             {
@@ -381,7 +381,7 @@ namespace ninedb::pbt
             uint64_t height = footer.tree_height;
 
             std::string_view key_suffix;
-            std::shared_ptr<detail::NodeInternal> node_internal;
+            std::shared_ptr<detail::NodeInternalShallow> node_internal;
 
             while (height >= 2)
             {
@@ -412,7 +412,7 @@ namespace ninedb::pbt
 
                 if (mode == EXACT)
                 {
-                    if (key_suffix.compare(node_internal->suffixes[0]) < 0)
+                    if (key_suffix.compare(node_internal->suffix(0)) < 0)
                     {
                         return;
                     }
@@ -420,7 +420,7 @@ namespace ninedb::pbt
 
                 for (uint64_t i = 0; i < node_internal->num_children; i++)
                 {
-                    if (key_suffix.compare(node_internal->suffixes[i + 1]) <= 0)
+                    if (key_suffix.compare(node_internal->suffix(i + 1)) <= 0)
                     {
                         offset = node_internal->offsets[i];
                         height--;
@@ -508,13 +508,13 @@ namespace ninedb::pbt
             return (uint64_t)(address - (uint8_t *)storage->get_address());
         }
 
-        void get_node_internal(uint64_t offset, std::shared_ptr<detail::NodeInternal> &node)
+        void get_node_internal(uint64_t offset, std::shared_ptr<detail::NodeInternalShallow> &node)
         {
             ZonePbtReader;
 
             if (config.internal_node_cache_size == 0)
             {
-                node = std::make_shared<detail::NodeInternal>();
+                node = std::make_shared<detail::NodeInternalShallow>();
                 uint8_t *address = offset_to_address(offset);
                 if (is_compressed())
                 {
@@ -529,7 +529,7 @@ namespace ninedb::pbt
             {
                 if (!node_internal_cache.try_get(offset, node))
                 {
-                    node = std::make_shared<detail::NodeInternal>();
+                    node = std::make_shared<detail::NodeInternalShallow>();
                     uint8_t *address = offset_to_address(offset);
                     if (is_compressed())
                     {
