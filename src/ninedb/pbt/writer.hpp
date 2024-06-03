@@ -69,19 +69,15 @@ namespace ninedb::pbt
             return Reader(storage, config);
         }
 
-        template <typename K, typename V>
         /**
          * Add a key-value pair to the PBT.
          */
-        void add(K &&key, V &&value)
+        void add(std::string_view key, std::string_view value)
         {
-            static_assert(ninedb::detail::is_string_kind_v<K>, "K must be a string");
-            static_assert(ninedb::detail::is_string_kind_v<V>, "V must be a string");
-
             ZonePbtWriter;
 
-            buffer_keys[buffer_length] = std::forward<K>(key);
-            buffer_values[buffer_length] = std::forward<V>(value);
+            buffer_keys[buffer_length] = key;
+            buffer_values[buffer_length] = value;
             num_entries++;
             buffer_length++;
             if (buffer_length >= config.max_node_entries)

@@ -10,7 +10,6 @@
 #include <boost/endian/conversion.hpp>
 
 #include "./detail/profiling.hpp"
-#include "./detail/traits.hpp"
 
 #include "./kvdb.hpp"
 #include "./detail/hilbert.hpp"
@@ -38,11 +37,8 @@ namespace ninedb
          * Add a value to the spatial db.
          * The value will be associated with the given x and y coordinates.
          */
-        template <typename V>
-        void add(uint32_t x, uint32_t y, V &&value)
+        void add(uint32_t x, uint32_t y, std::string_view value)
         {
-            static_assert(detail::is_string_kind_v<V>, "value must be a string");
-
             ZoneDb;
 
             uint32_t h = detail::hilbert_xy_to_index(16, x, y);
@@ -55,11 +51,8 @@ namespace ninedb
          * Add a value to the spatial db.
          * The value will be associated with the given bounding box.
          */
-        template <typename V>
-        void add(uint32_t x0, uint32_t y0, uint32_t x1, uint32_t y1, V &&value)
+        void add(uint32_t x0, uint32_t y0, uint32_t x1, uint32_t y1, std::string_view value)
         {
-            static_assert(detail::is_string_kind_v<V>, "value must be a string");
-
             ZoneDb;
 
             uint32_t x = average(x0, x1);

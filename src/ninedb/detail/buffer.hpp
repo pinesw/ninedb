@@ -14,16 +14,12 @@ namespace ninedb::detail
     {
         typedef typename std::multimap<std::string, std::string> buffer_map;
 
-        template <typename K, typename V>
-        void insert(K &&key, V &&value)
+        void insert(std::string_view key, std::string_view value)
         {
-            static_assert(ninedb::detail::is_string_kind_v<K>, "key must be a string");
-            static_assert(ninedb::detail::is_string_kind_v<V>, "value must be a string");
-
             ZoneBuffer;
 
-            size += std::string_view(key).size() + std::string_view(value).size();
-            map.insert(buffer_map::value_type(std::forward<K>(key), std::forward<V>(value)));
+            size += key.size() + value.size();
+            map.insert(buffer_map::value_type(key, value));
         }
 
         void clear()

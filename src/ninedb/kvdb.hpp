@@ -10,7 +10,6 @@
 #include <utility>
 
 #include "./detail/profiling.hpp"
-#include "./detail/traits.hpp"
 #include "./detail/buffer.hpp"
 #include "./detail/level_manager/level_manager.hpp"
 
@@ -62,17 +61,13 @@ namespace ninedb
          * Add a key-value pair to the db.
          * If the key already exists, the value will be added after the existing values.
          */
-        template <typename K, typename V>
-        void add(K &&key, V &&value)
+        void add(std::string_view key, std::string_view value)
         {
-            static_assert(ninedb::detail::is_string_kind_v<K>, "key must be a string");
-            static_assert(ninedb::detail::is_string_kind_v<V>, "value must be a string");
-
             ZoneDb;
 
             // TODO: run flush/merge in a separate thread pool.
 
-            buffer.insert(std::forward<K>(key), std::forward<V>(value));
+            buffer.insert(key, value);
             if (buffer.get_size() > config.max_buffer_size)
             {
                 flush();
@@ -84,16 +79,13 @@ namespace ninedb
          * If the key does not exist, false will be returned.
          * Otherwise, true will be returned and the value will be set.
          */
-        template <typename K>
-        bool get(K &&key, std::string_view &value) const
+        bool get(std::string_view key, std::string_view &value) const
         {
-            static_assert(ninedb::detail::is_string_kind_v<K>, "key must be a string");
-
             ZoneDb;
 
             for (const auto &[file_name, reader] : readers)
             {
-                if (reader->get(std::forward<K>(key), value))
+                if (reader->get(key, value))
                 {
                     return true;
                 }
@@ -104,11 +96,8 @@ namespace ninedb
         /**
          * Get the first value for the given key.
          */
-        template <typename K>
-        std::optional<std::string_view> get(K &&key) const
+        std::optional<std::string_view> get(std::string_view key) const
         {
-            static_assert(ninedb::detail::is_string_kind_v<K>, "key must be a string");
-
             ZoneDb;
 
             std::string_view value;
