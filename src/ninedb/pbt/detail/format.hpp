@@ -22,24 +22,24 @@ namespace ninedb::pbt::detail
         std::string stem;
 
         std::unique_ptr<uint8_t[]> data;
-        uint8_t *strings_address;
+        uint8_t *strings_ptr;
         std::unique_ptr<uint64_t[]> string_offsets;
 
         std::string_view suffix(uint64_t index) const
         {
-            if (index == 0)
-            {
-                return std::string_view((char *)strings_address, string_offsets[0]);
-            }
-            else
-            {
-                return std::string_view((char *)strings_address + string_offsets[index - 1], string_offsets[index] - string_offsets[index - 1]);
-            }
+            return std::string_view((char *)strings_ptr + string_offsets[num_children + index - 1], string_offsets[num_children + index] - string_offsets[num_children + index - 1]);
         }
 
         std::string_view value(uint64_t index) const
         {
-            return std::string_view((char *)strings_address + string_offsets[num_children + index - 1], string_offsets[num_children + index] - string_offsets[num_children + index - 1]);
+            if (index == 0)
+            {
+                return std::string_view((char *)strings_ptr, string_offsets[0]);
+            }
+            else
+            {
+                return std::string_view((char *)strings_ptr + string_offsets[index - 1], string_offsets[index] - string_offsets[index - 1]);
+            }
         }
     };
 
@@ -49,26 +49,26 @@ namespace ninedb::pbt::detail
         std::string stem;
 
         std::unique_ptr<uint8_t[]> data;
-        uint8_t *strings_address;
+        uint8_t *strings_ptr;
         std::unique_ptr<uint64_t[]> offsets;
         std::unique_ptr<uint64_t[]> num_entries;
         std::unique_ptr<uint64_t[]> string_offsets;
 
         std::string_view suffix(uint64_t index) const
         {
-            if (index == 0)
-            {
-                return std::string_view((char *)strings_address, string_offsets[0]);
-            }
-            else
-            {
-                return std::string_view((char *)strings_address + string_offsets[index - 1], string_offsets[index] - string_offsets[index - 1]);
-            }
+            return std::string_view((char *)strings_ptr + string_offsets[num_children + index - 1], string_offsets[num_children + index] - string_offsets[num_children + index - 1]);
         }
 
         std::string_view reduced_value(uint64_t index) const
         {
-            return std::string_view((char *)strings_address + string_offsets[num_children + 1 + index - 1], string_offsets[num_children + 1 + index] - string_offsets[num_children + 1 + index - 1]);
+            if (index == 0)
+            {
+                return std::string_view((char *)strings_ptr, string_offsets[0]);
+            }
+            else
+            {
+                return std::string_view((char *)strings_ptr + string_offsets[index - 1], string_offsets[index] - string_offsets[index - 1]);
+            }
         }
     };
 
@@ -262,19 +262,19 @@ namespace ninedb::pbt::detail
             write_string(address, node.stem);
             for (uint64_t i = 0; i < node.num_children; i++)
             {
-                write_varint64(address, node.suffixes[i].size());
-            }
-            for (uint64_t i = 0; i < node.num_children; i++)
-            {
                 write_varint64(address, node.values[i].size());
             }
             for (uint64_t i = 0; i < node.num_children; i++)
             {
-                write_string_data_only(address, node.suffixes[i]);
+                write_varint64(address, node.suffixes[i].size());
             }
             for (uint64_t i = 0; i < node.num_children; i++)
             {
                 write_string_data_only(address, node.values[i]);
+            }
+            for (uint64_t i = 0; i < node.num_children; i++)
+            {
+                write_string_data_only(address, node.suffixes[i]);
             }
         }
 
@@ -303,21 +303,21 @@ namespace ninedb::pbt::detail
             {
                 write_varint64(address, node.num_entries[i]);
             }
-            for (uint64_t i = 0; i < node.num_children + 1; i++)
-            {
-                write_varint64(address, node.suffixes[i].size());
-            }
             for (uint64_t i = 0; i < node.num_children; i++)
             {
                 write_varint64(address, node.reduced_values[i].size());
             }
             for (uint64_t i = 0; i < node.num_children + 1; i++)
             {
-                write_string_data_only(address, node.suffixes[i]);
+                write_varint64(address, node.suffixes[i].size());
             }
             for (uint64_t i = 0; i < node.num_children; i++)
             {
                 write_string_data_only(address, node.reduced_values[i]);
+            }
+            for (uint64_t i = 0; i < node.num_children + 1; i++)
+            {
+                write_string_data_only(address, node.suffixes[i]);
             }
         }
 
@@ -430,7 +430,7 @@ namespace ninedb::pbt::detail
                     node.string_offsets[i] += node.string_offsets[i - 1];
                 }
             }
-            node.strings_address = address;
+            node.strings_ptr = address;
             address += node.string_offsets[2 * node.num_children - 1];
         }
 
@@ -473,7 +473,7 @@ namespace ninedb::pbt::detail
                     node.string_offsets[i] += node.string_offsets[i - 1];
                 }
             }
-            node.strings_address = address;
+            node.strings_ptr = address;
             address += node.string_offsets[2 * node.num_children + 1 - 1];
         }
 

@@ -34,8 +34,8 @@ namespace ninedb::pbt::detail
     {
         uint64_t num_children;
         std::string stem;
-        std::vector<std::string> suffixes;
         std::vector<std::string> values;
+        std::vector<std::string> suffixes;
     };
 
     struct NodeInternal
@@ -44,7 +44,7 @@ namespace ninedb::pbt::detail
         std::string stem;
         std::vector<uint64_t> offsets;
         std::vector<uint64_t> num_entries;
-        std::vector<std::string> suffixes;
         std::vector<std::string> reduced_values;
+        std::vector<std::string> suffixes;
     };
 }
