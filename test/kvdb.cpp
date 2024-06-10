@@ -417,17 +417,17 @@ void benchmark_iterator()
 
 int main()
 {
-    test_get_by_key();
-    test_get_by_index();
-    test_iterator_begin();
-    test_iterator_seek_key();
-    test_iterator_seek_index();
-    test_iterator_end();
-    test_reopen();
+    // test_get_by_key();
+    // test_get_by_index();
+    // test_iterator_begin();
+    // test_iterator_seek_key();
+    // test_iterator_seek_index();
+    // test_iterator_end();
+    // test_reopen();
 
-    // benchmark_add();
-    // benchmark_get();
-    // benchmark_iterator();
+    benchmark_add();
+    benchmark_get();
+    benchmark_iterator();
 
     return 0;
 }

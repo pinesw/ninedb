@@ -306,7 +306,7 @@ namespace ninedb
             pbt::Writer writer(level_manager.get_global_counter(), file_name, get_writer_config(config));
             for (const auto &[key, value] : buffer)
             {
-                writer.add(std::move(key), std::move(value));
+                writer.add(key, value);
             }
             writer.finish();
             buffer.clear();

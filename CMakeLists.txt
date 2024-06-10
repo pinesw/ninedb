@@ -9,6 +9,7 @@ list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build)
 
 find_package(Boost REQUIRED)
 find_package(lz4 REQUIRED)
+find_package(tracy REQUIRED)
 
 add_executable(${PROJECT_NAME} test/kvdb.cpp)
-target_link_libraries(${PROJECT_NAME} Boost::boost lz4::lz4)
+target_link_libraries(${PROJECT_NAME} Boost::boost lz4::lz4 Tracy::TracyClient)

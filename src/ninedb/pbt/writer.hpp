@@ -301,16 +301,15 @@ namespace ninedb::pbt
         {
             ZonePbtWriter;
 
-            uint64_t num_entries = buffer_length;
-            if (num_entries <= 0)
+            if (buffer_length <= 0)
             {
                 return;
             }
 
-            buffer_leaf.num_children = num_entries;
-            buffer_leaf.stem = compute_stem(buffer_keys, num_entries);
+            buffer_leaf.num_children = buffer_length;
+            buffer_leaf.stem = compute_stem(buffer_keys, buffer_length);
 
-            for (uint64_t i = 0; i < num_entries; i++)
+            for (uint64_t i = 0; i < buffer_length; i++)
             {
                 buffer_leaf.suffixes[i] = std::string_view(buffer_keys[i]).substr(buffer_leaf.stem.size());
                 buffer_leaf.values[i] = std::string_view(buffer_values[i]);
