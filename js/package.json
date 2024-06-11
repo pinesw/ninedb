@@ -1,5 +1,5 @@
 {
-  "name": "ninedb",
+  "name": "@pinesw/ninedb",
   "version": "1.0.0",
   "main": "./binding.js",
   "types": "./binding.d.ts",
@@ -23,7 +23,7 @@
     "install.mjs"
   ],
   "binary": {
-    "url": "https://github.com/woutervh-/ninedb/releases/download/{package_version}/ninedb-{platform}-{arch}-{node_version}.node",
+    "url": "https://github.com/pinesw/ninedb/releases/download/{package_version}/ninedb-{platform}-{arch}-{node_version}.node",
     "target": "./ninedb.node"
   }
 }

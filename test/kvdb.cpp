@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-// #define NINEDB_PROFILING
+#define NINEDB_PROFILING
 
 #include "../src/ninedb/kvdb.hpp"
 
