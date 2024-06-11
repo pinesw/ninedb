@@ -78,7 +78,11 @@ class NativeLoader {
         }
 
         if (arch.contains("64")) {
-            archName = "x64";
+            if (osName.equals("macos")) {
+                archName = "arm64";
+            } else {
+                archName = "x64";
+            }
         } else if (arch.contains("86")) {
             archName = "x86";
         } else {
