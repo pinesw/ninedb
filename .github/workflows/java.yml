@@ -150,10 +150,12 @@ jobs:
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
       - name: Read tag
+        id: read_tag
         run: |
           tag=${GITHUB_REF#refs/tags/}
           echo "Found tag: $tag"
           echo "tag=$tag" >> $GITHUB_ENV
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
       - name: Verify Java package version
         working-directory: java
@@ -184,7 +186,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: java
-          path: java/target/ninedb-${{  }}-SNAPSHOT.jar
+          path: java/target/ninedb-${{ steps.read_tag.outputs.tag }}.jar
 
       - name: Publish to Apache Maven Central
         run: mvn deploy
