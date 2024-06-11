@@ -1,4 +1,4 @@
-package io.woutervh.ninedb;
+package io.pinesw.ninedb;
 
 public class HrDatabase implements AutoCloseable {
     static {

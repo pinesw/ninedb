@@ -37,7 +37,7 @@ find_package(Boost REQUIRED)
 find_package(lz4 REQUIRED)
 
 # Set up the target
-add_library(${PROJECT_NAME} SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/io_woutervh_ninedb.cpp)
+add_library(${PROJECT_NAME} SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/io_pinesw_ninedb.cpp)
 set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(${PROJECT_NAME} Boost::boost lz4::lz4)
 

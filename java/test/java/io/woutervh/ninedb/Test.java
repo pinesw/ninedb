@@ -1,4 +1,4 @@
-package io.woutervh.ninedb;
+package io.pinesw.ninedb;
 
 import java.io.File;
 

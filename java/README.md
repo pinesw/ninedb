@@ -14,14 +14,14 @@ cmake --build java/build --config Release
 ```bash
 cd java
 
-javac -h src/main/cpp -cp src/main/java src/main/java/io/woutervh/ninedb/KvDatabase.java src/main/java/io/woutervh/ninedb/KvDbIterator.java src/main/java/io/woutervh/ninedb/HrDatabase.java
+javac -h src/main/cpp -cp src/main/java src/main/java/io/pinesw/ninedb/KvDatabase.java src/main/java/io/pinesw/ninedb/KvDbIterator.java src/main/java/io/pinesw/ninedb/HrDatabase.java
 
-javac -cp "src/main/java;test/java" test/java/io/woutervh/ninedb/Test.java
-java -Djava.library.path=build -cp "src/main/java;test/java" io.woutervh.ninedb.Test
+javac -cp "src/main/java;test/java" test/java/io/pinesw/ninedb/Test.java
+java -Djava.library.path=build -cp "src/main/java;test/java" io.pinesw.ninedb.Test
 ```
 
 ```bash
 cd java
 
-javap -cp src/main/java -s io.woutervh.ninedb.DbConfig
+javap -cp src/main/java -s io.pinesw.ninedb.DbConfig
 ```
