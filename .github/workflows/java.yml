@@ -194,7 +194,7 @@ jobs:
           path: java/target/ninedb-${{ steps.read_tag.outputs.tag }}.jar
 
       - name: Publish to Apache Maven Central
-        run: mvn deploy
+        run: mvn deploy -f java/pom.xml
         env:
           MAVEN_USERNAME: szrmYssu
           MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}
