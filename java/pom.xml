@@ -113,30 +113,6 @@
                     <autoPublish>true</autoPublish>
                 </configuration>
             </plugin>
-
-            <!-- Plugin to add checksums -->
-            <!-- Would be taken care of by plugin central-publishing-maven-plugin https://central.sonatype.org/publish/publish-portal-maven/ -->
-            <!-- <plugin>
-                <groupId>net.ju-n.maven.plugins</groupId>
-                <artifactId>checksum-maven-plugin</artifactId>
-                <version>1.4</version>
-                <executions>
-                    <execution>
-                        <id>generate-artifact-checksum</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>files</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <fileSets>
-                        <fileSet>
-                            <directory>${project.build.directory}</directory>
-                        </fileSet>
-                    </fileSets>
-                </configuration>
-            </plugin> -->
         </plugins>
 
         <resources>
