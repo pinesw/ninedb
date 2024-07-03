@@ -195,6 +195,10 @@ jobs:
 
       - name: Verify Maven settings
         shell: bash
+        env:
+          MAVEN_USERNAME: 2if17EMK
+          MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
         run: |
           cat ~/.m2/settings.xml
           mvn help:effective-settings
