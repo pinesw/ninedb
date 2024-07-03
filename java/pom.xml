@@ -39,11 +39,11 @@
 
     <distributionManagement>
         <snapshotRepository>
-            <id>maven</id>
+            <id>central</id>
             <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
         </snapshotRepository>
         <repository>
-            <id>maven</id>
+            <id>central</id>
             <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
     </distributionManagement>
@@ -103,15 +103,16 @@
                 </configuration>
             </plugin>
 
-            <!-- <plugin>
+            <plugin>
                 <groupId>org.sonatype.central</groupId>
                 <artifactId>central-publishing-maven-plugin</artifactId>
                 <version>0.5.0</version>
                 <extensions>true</extensions>
                 <configuration>
                     <publishingServerId>central</publishingServerId>
+                    <autoPublish>true</autoPublish>
                 </configuration>
-            </plugin> -->
+            </plugin>
 
             <!-- Plugin to add checksums -->
             <!-- Would be taken care of by plugin central-publishing-maven-plugin https://central.sonatype.org/publish/publish-portal-maven/ -->
