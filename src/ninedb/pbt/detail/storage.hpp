@@ -9,6 +9,8 @@
 #include <boost/interprocess/file_mapping.hpp>
 #include <boost/interprocess/mapped_region.hpp>
 
+// TODO: try with file operations rather than mmap.
+
 namespace ninedb::pbt::detail
 {
     struct Storage

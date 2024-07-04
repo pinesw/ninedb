@@ -17,8 +17,8 @@ namespace ninedb::pbt::detail
         uint64_t tree_height;
 
         // Metadata values.
-        uint64_t global_counter;
-        uint64_t num_entries;
+        uint64_t global_counter; // TODO: rename -> global_start
+        uint64_t num_entries; // TODO: rename -> global_end and add global_start to this value
         uint8_t compression;
 
         // Versioning values.
