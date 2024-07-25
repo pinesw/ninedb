@@ -352,10 +352,6 @@ JNIEXPORT jlong JNICALL Java_io_pinesw_ninedb_HrDatabase_hrdb_1open(JNIEnv *env,
     config.error_if_exists = jni_object_get_property_boolean_boxed(env, obj_config, "errorIfExists", false);
     config.max_buffer_size = jni_object_get_property_integer_boxed(env, obj_config, "maxBufferSize", 1 << 22);
     config.max_level_count = jni_object_get_property_integer_boxed(env, obj_config, "maxLevelCount", 10);
-    config.reader.internal_node_cache_size = jni_object_get_property_integer_boxed(env, obj_config, "internalNodeCacheSize", 64);
-    config.reader.leaf_node_cache_size = jni_object_get_property_integer_boxed(env, obj_config, "leafNodeCacheSize", 8);
-    config.writer.enable_compression = jni_object_get_property_boolean_boxed(env, obj_config, "enableCompression", true);
-    config.writer.enable_prefix_encoding = jni_object_get_property_boolean_boxed(env, obj_config, "enablePrefixEncoding", true);
     config.writer.initial_pbt_size = jni_object_get_property_integer_boxed(env, obj_config, "initialPbtSize", 1 << 23);
     config.writer.max_node_children = jni_object_get_property_integer_boxed(env, obj_config, "maxNodeChildren", 16);
 
