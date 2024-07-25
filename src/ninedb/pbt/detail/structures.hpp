@@ -45,7 +45,7 @@ namespace ninedb::pbt::detail
             this->magic = MAGIC;
         }
 
-        uint8_t *write(uint8_t *address) const
+        uint64_t write(uint8_t *address) const
         {
             ZonePbtStructures;
 
@@ -58,10 +58,10 @@ namespace ninedb::pbt::detail
             address += Format::write_uint16(address, this->version_minor);
             address += Format::write_uint32(address, this->magic);
 
-            return address;
+            return Footer::size_of();
         }
 
-        static uint8_t *read(uint8_t *address, Footer &footer)
+        static uint64_t read(uint8_t *address, Footer &footer)
         {
             ZonePbtFormat;
 
@@ -74,7 +74,7 @@ namespace ninedb::pbt::detail
             address += Format::read_uint16(address, footer.version_minor);
             address += Format::read_uint32(address, footer.magic);
 
-            return address;
+            return Footer::size_of();
         }
 
         static constexpr uint64_t size_of()
@@ -138,10 +138,11 @@ namespace ninedb::pbt::detail
             data.clear();
         }
 
-        uint8_t *write(uint8_t *address) const
+        uint64_t write(uint8_t *address) const
         {
             ZonePbtStructures;
 
+            uint8_t *base_address = address;
             uint64_t data_offset = sizeof(uint16_t) + 3 * sizeof(uint64_t) * this->num_children;
 
             address += Format::write_uint16(address, this->num_children);
@@ -153,7 +154,7 @@ namespace ninedb::pbt::detail
             }
             address += Format::write_string_data_only(address, this->data);
 
-            return address;
+            return address - base_address;
         }
 
         uint64_t size_of() const
@@ -285,10 +286,11 @@ namespace ninedb::pbt::detail
             data.clear();
         }
 
-        uint8_t *write(uint8_t *address) const
+        uint64_t write(uint8_t *address) const
         {
             ZonePbtStructures;
 
+            uint8_t *base_address = address;
             uint64_t data_offset = sizeof(uint16_t) + 2 * sizeof(uint64_t) + 5 * sizeof(uint64_t) * this->num_children;
 
             address += Format::write_uint16(address, this->num_children);
@@ -306,7 +308,7 @@ namespace ninedb::pbt::detail
 
             address += Format::write_string_data_only(address, this->data);
 
-            return address;
+            return address - base_address;
         }
 
         uint64_t size_of() const

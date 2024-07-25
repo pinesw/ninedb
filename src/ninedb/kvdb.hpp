@@ -284,14 +284,14 @@ namespace ninedb
         {
             ZoneDb;
 
-            if (buffer.get_size() == 0)
+            if (buffer.get_size() <= 0)
             {
                 return;
             }
 
             uint64_t num_entries = buffer.get_count();
             std::string file_name = level_manager.get_next_level_0_file_path();
-            pbt::Writer writer(level_manager.get_global_counter(), file_name, get_writer_config(config));
+            pbt::Writer writer(level_manager.get_global_start(), file_name, get_writer_config(config));
             for (const auto &[key, value] : buffer)
             {
                 writer.add(key, value);
@@ -300,7 +300,7 @@ namespace ninedb
             buffer.clear();
 
             level_manager.advance_level_0();
-            level_manager.set_global_counter(level_manager.get_global_counter() + num_entries);
+            level_manager.set_global_start(level_manager.get_global_start() + num_entries);
 
             readers[file_name] = std::make_shared<pbt::Reader>(writer.to_reader());
         }
@@ -310,16 +310,16 @@ namespace ninedb
             ZoneDb;
 
             std::vector<std::shared_ptr<pbt::Reader>> src_readers;
-            uint64_t global_counter = std::numeric_limits<uint64_t>::max();
+            uint64_t global_start = std::numeric_limits<uint64_t>::max();
             for (const auto &[level, index] : merge_operation.src_levels_and_indices)
             {
                 std::string file_name = level_manager.get_file_path(index, level);
                 src_readers.push_back(readers[file_name]);
-                global_counter = std::min(global_counter, readers[file_name]->get_global_start());
+                global_start = std::min(global_start, readers[file_name]->get_global_start());
             }
 
             std::string target_file_name = level_manager.get_file_path(merge_operation.dst_index, merge_operation.dst_level);
-            pbt::Writer writer(global_counter, target_file_name, get_writer_config(config));
+            pbt::Writer writer(global_start, target_file_name, get_writer_config(config));
             writer.merge(src_readers);
             writer.finish();
 

@@ -20,7 +20,7 @@ namespace ninedb::detail::level_manager
         {
             State initial_state;
             initial_state.next_index = 0;
-            initial_state.global_counter = 0;
+            initial_state.global_start = 0;
             initial_state.levels = {};
 
             LevelManager level_manager(path, config, initial_state);
@@ -44,14 +44,14 @@ namespace ninedb::detail::level_manager
             state.next_index++;
         }
 
-        uint64_t get_global_counter() const
+        uint64_t get_global_start() const
         {
-            return state.global_counter;
+            return state.global_start;
         }
 
-        void set_global_counter(uint64_t global_counter)
+        void set_global_start(uint64_t global_start)
         {
-            state.global_counter = global_counter;
+            state.global_start = global_start;
         }
 
         void load_state()
@@ -89,7 +89,7 @@ namespace ninedb::detail::level_manager
                 std::sort(level.indices.begin(), level.indices.end());
             }
             auto footer = pbt::read_footer(max_index_file_path);
-            state.global_counter = footer.global_end;
+            state.global_start = footer.global_end;
         }
 
         std::vector<std::string> get_unmerged_files() const

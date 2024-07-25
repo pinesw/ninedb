@@ -32,7 +32,7 @@ namespace ninedb::detail::level_manager
     struct State
     {
         uint64_t next_index;
-        uint64_t global_counter;
+        uint64_t global_start;
         std::vector<LevelState> levels;
     };
 }

@@ -30,8 +30,8 @@ namespace ninedb::pbt
 {
     struct Writer
     {
-        Writer(uint64_t global_counter, const std::string &path, const WriterConfig &config)
-            : global_counter(global_counter), config(config)
+        Writer(uint64_t global_start, const std::string &path, const WriterConfig &config)
+            : global_start(global_start), config(config)
         {
             if (std::filesystem::exists(path))
             {
@@ -52,8 +52,8 @@ namespace ninedb::pbt
             storage->clear();
         }
 
-        Writer(uint64_t global_counter, const std::shared_ptr<detail::Storage> &storage, const WriterConfig &config)
-            : global_counter(global_counter), storage(storage), config(config)
+        Writer(uint64_t global_start, const std::shared_ptr<detail::Storage> &storage, const WriterConfig &config)
+            : global_start(global_start), storage(storage), config(config)
         {
             storage->clear();
         }
@@ -170,8 +170,8 @@ namespace ninedb::pbt
             detail::Footer footer = detail::Footer();
             footer.level_0_end = write_offset;
             footer.tree_height = entry_counts.size();
-            footer.global_start = global_counter;
-            footer.global_end = global_counter + num_entries;
+            footer.global_start = global_start;
+            footer.global_end = global_start + num_entries;
 
             std::vector<std::string_view> keys;
             std::vector<std::string_view> values;
@@ -231,7 +231,7 @@ namespace ninedb::pbt
     private:
         WriterConfig config;
         std::shared_ptr<detail::Storage> storage;
-        uint64_t global_counter;
+        uint64_t global_start;
         uint64_t write_offset = 0;
         uint64_t num_entries = 0;
         detail::NodeLeafWrite buffer_leaf;
@@ -264,21 +264,13 @@ namespace ninedb::pbt
             }
         }
 
-        uint64_t address_to_offset(uint8_t *address) const
-        {
-            ZonePbtReader;
-
-            return (uint64_t)(address - (uint8_t *)storage->get_address());
-        }
-
         void append_footer(const detail::Footer &footer)
         {
             ZonePbtWriter;
 
             ensure_space(detail::Footer::size_of());
             uint8_t *address = (uint8_t *)storage->get_address() + write_offset;
-            address = footer.write(address);
-            write_offset = address_to_offset(address);
+            write_offset += footer.write(address);
         }
 
         void append_node_leaf(const detail::NodeLeafWrite &node)
@@ -287,8 +279,7 @@ namespace ninedb::pbt
 
             uint8_t *address = (uint8_t *)storage->get_address() + write_offset;
             ensure_space(node.size_of());
-            address = node.write(address);
-            write_offset = address_to_offset(address);
+            write_offset += node.write(address);
         }
 
         void append_node_internal(const detail::NodeInternalWrite &node)
@@ -297,8 +288,7 @@ namespace ninedb::pbt
 
             uint8_t *address = (uint8_t *)storage->get_address() + write_offset;
             ensure_space(node.size_of());
-            address = node.write(address);
-            write_offset = address_to_offset(address);
+            write_offset += node.write(address);
         }
 
         uint64_t read_node_metadata(uint64_t offset, uint64_t level, uint64_t &entry_count, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
