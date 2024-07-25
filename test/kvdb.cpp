@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#define NINEDB_PROFILING
+// #define NINEDB_PROFILING
 
 #include "../src/ninedb/kvdb.hpp"
 
@@ -132,7 +132,7 @@ void test_iterator_begin()
     db.flush();
 
     Iterator it = db.begin();
-    std::string key;
+    std::string_view key;
     std::string_view value;
     uint64_t count = 0;
     while (!it.is_end())
@@ -180,7 +180,7 @@ void test_iterator_seek_key()
     db.flush();
 
     Iterator it = db.seek(db.at(5000).value().first);
-    std::string key;
+    std::string_view key;
     std::string_view value;
     uint64_t count = 5000;
     while (!it.is_end())
@@ -228,7 +228,7 @@ void test_iterator_seek_index()
     db.flush();
 
     Iterator it = db.seek(5000);
-    std::string key;
+    std::string_view key;
     std::string_view value;
     uint64_t count = 5000;
     while (!it.is_end())
@@ -391,7 +391,7 @@ void benchmark_iterator()
 
     auto t1 = std::chrono::high_resolution_clock::now();
     auto it = db.begin();
-    std::string key;
+    std::string_view key;
     std::string_view value;
     while (!it.is_end())
     {

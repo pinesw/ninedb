@@ -20,7 +20,7 @@ namespace ninedb
             return keys[current];
         }
 
-        void get_key(std::string &key) const
+        void get_key(std::string_view &key) const
         {
             key = keys[current];
         }

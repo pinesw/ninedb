@@ -61,7 +61,7 @@ namespace ninedb::pbt
 
             uint64_t node_offset = footer.level_0_end;
             uint64_t entry_index = 0;
-            detail::NodeLeafShallow node_leaf(nullptr);
+            detail::NodeLeafRead node_leaf(nullptr);
             find<EXACT>(key, node_leaf, node_offset, entry_index);
 
             if (node_offset >= footer.level_0_end)
@@ -103,7 +103,7 @@ namespace ninedb::pbt
 
             uint64_t node_offset = footer.level_0_end;
             uint64_t entry_index = 0;
-            detail::NodeLeafShallow node_leaf(nullptr);
+            detail::NodeLeafRead node_leaf(nullptr);
             find_index(index, node_leaf, node_offset, entry_index);
 
             if (node_offset >= footer.level_0_end)
@@ -149,7 +149,7 @@ namespace ninedb::pbt
 
             uint64_t node_offset = footer.level_0_end;
             uint64_t entry_index = 0;
-            detail::NodeLeafShallow node_leaf(nullptr);
+            detail::NodeLeafRead node_leaf(nullptr);
             find<GREATER_OR_EQUAL>(key, node_leaf, node_offset, entry_index);
 
             return Iterator(storage, entry_index, node_offset, footer.level_0_end);
@@ -225,7 +225,7 @@ namespace ninedb::pbt
 
             uint64_t node_offset = footer.level_0_end;
             uint64_t entry_index = 0;
-            detail::NodeLeafShallow node_leaf(nullptr);
+            detail::NodeLeafRead node_leaf(nullptr);
             find_index(index, node_leaf, node_offset, entry_index);
 
             return Iterator(storage, entry_index, node_offset, footer.level_0_end);
@@ -290,7 +290,7 @@ namespace ninedb::pbt
 
             if (height == 1)
             {
-                detail::NodeLeafShallow node_leaf(offset_to_address(offset));
+                detail::NodeLeafRead node_leaf(offset_to_address(offset));
 
                 for (uint64_t i = 0; i < node_leaf.num_children(); i++)
                 {
@@ -302,7 +302,7 @@ namespace ninedb::pbt
             }
             else
             {
-                detail::NodeInternalShallow node_internal(offset_to_address(offset));
+                detail::NodeInternalRead node_internal(offset_to_address(offset));
 
                 for (uint64_t i = 0; i < node_internal.num_children(); i++)
                 {
@@ -314,14 +314,14 @@ namespace ninedb::pbt
             }
         }
 
-        void find_index(uint64_t index, detail::NodeLeafShallow &node_leaf, uint64_t &node_offset, uint64_t &entry_index)
+        void find_index(uint64_t index, detail::NodeLeafRead &node_leaf, uint64_t &node_offset, uint64_t &entry_index)
         {
             ZonePbtReader;
 
             uint64_t offset = footer.root_offset;
             uint64_t height = footer.tree_height;
 
-            detail::NodeInternalShallow node_internal(nullptr);
+            detail::NodeInternalRead node_internal(nullptr);
 
             while (height >= 2)
             {
@@ -356,14 +356,14 @@ namespace ninedb::pbt
         }
 
         template <ReaderFindMode mode>
-        void find(std::string_view key, detail::NodeLeafShallow &node_leaf, uint64_t &node_offset, uint64_t &entry_index)
+        void find(std::string_view key, detail::NodeLeafRead &node_leaf, uint64_t &node_offset, uint64_t &entry_index)
         {
             ZonePbtReader;
 
             uint64_t offset = footer.root_offset;
             uint64_t height = footer.tree_height;
 
-            detail::NodeInternalShallow node_internal(nullptr);
+            detail::NodeInternalRead node_internal(nullptr);
 
             while (height >= 2)
             {

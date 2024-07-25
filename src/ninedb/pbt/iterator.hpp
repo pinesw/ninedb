@@ -80,7 +80,7 @@ namespace ninedb::pbt
 
     private:
         std::shared_ptr<detail::Storage> storage;
-        detail::NodeLeafShallow current_leaf;
+        detail::NodeLeafRead current_leaf;
         uint64_t current_index;
         uint8_t *current_address;
         uint8_t *next_address;

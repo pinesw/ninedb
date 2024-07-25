@@ -234,8 +234,8 @@ namespace ninedb::pbt
         uint64_t global_counter;
         uint64_t write_offset = 0;
         uint64_t num_entries = 0;
-        detail::NodeLeaf buffer_leaf;
-        detail::NodeInternal buffer_internal;
+        detail::NodeLeafWrite buffer_leaf;
+        detail::NodeInternalWrite buffer_internal;
 
         /**
          * Write the leaf node buffer to the storage and clear it.
@@ -281,7 +281,7 @@ namespace ninedb::pbt
             write_offset = address_to_offset(address);
         }
 
-        void append_node_leaf(const detail::NodeLeaf &node)
+        void append_node_leaf(const detail::NodeLeafWrite &node)
         {
             ZonePbtWriter;
 
@@ -291,7 +291,7 @@ namespace ninedb::pbt
             write_offset = address_to_offset(address);
         }
 
-        void append_node_internal(const detail::NodeInternal &node)
+        void append_node_internal(const detail::NodeInternalWrite &node)
         {
             ZonePbtWriter;
 
@@ -318,7 +318,7 @@ namespace ninedb::pbt
 
         uint64_t read_node_leaf_metadata(uint8_t *address, uint64_t &entry_count, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
         {
-            detail::NodeLeafShallow node(address);
+            detail::NodeLeafRead node(address);
             entry_count = node.num_children();
             values.resize(entry_count);
             for (uint64_t i = 0; i < entry_count; i++)
@@ -338,7 +338,7 @@ namespace ninedb::pbt
 
         uint64_t read_node_internal_metadata(uint8_t *address, uint64_t &entry_count, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
         {
-            detail::NodeInternalShallow node(address);
+            detail::NodeInternalRead node(address);
             uint64_t num_children = node.num_children();
             entry_count = 0;
             for (uint64_t i = 0; i < num_children; i++)
