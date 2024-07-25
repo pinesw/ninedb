@@ -8,10 +8,6 @@ public class DbConfig {
     public Boolean errorIfExists = null;
     public Integer maxBufferSize = null;
     public Integer maxLevelCount = null;
-    public Integer internalNodeCacheSize = null;
-    public Integer leafNodeCacheSize = null;
-    public Boolean enableCompression = null;
-    public Boolean enablePrefixEncoding = null;
     public Integer initialPbtSize = null;
     public Integer maxNodeChildren = null;
     public Function<byte[][], byte[]> reduce = null;

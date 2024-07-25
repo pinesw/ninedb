@@ -36,7 +36,7 @@ public:
         env->DeleteGlobalRef(obj_reduce_global_ref);
     }
 
-    void call(const std::vector<std::string> &values, std::string &reduced_value)
+    void call(const std::vector<std::string_view> &values, std::string &reduced_value)
     {
         jclass cls_ByteArray = env->FindClass("[B");
         jobjectArray obj_values = env->NewObjectArray(values.size(), cls_ByteArray, nullptr);

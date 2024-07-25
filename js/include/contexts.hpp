@@ -21,7 +21,7 @@ struct ContextReduceCallback : FunctionContext<void, const std::vector<std::stri
         : FunctionContext<void, const std::vector<std::string> &, std::string &>(env, func, to_napi_args, from_napi_result) {}
 
 private:
-    static std::vector<napi_value> to_napi_args(napi_env env, const std::vector<std::string> &values, std::string &reduced_value)
+    static std::vector<napi_value> to_napi_args(napi_env env, const std::vector<std::string_view> &values, std::string &reduced_value)
     {
         napi_value buffers;
         NAPI_STATUS_THROW_ERROR(napi_create_array_with_length(env, values.size(), &buffers));
@@ -34,7 +34,7 @@ private:
         return {buffers};
     }
 
-    static void from_napi_result(napi_env env, napi_value result, const std::vector<std::string> &values, std::string &reduced_value)
+    static void from_napi_result(napi_env env, napi_value result, const std::vector<std::string_view> &values, std::string &reduced_value)
     {
         char *result_string;
         size_t result_string_len;

@@ -40,10 +40,6 @@ NAPI_METHOD(kvdb_open)
     config.error_if_exists = napi_object_get_property_boolean(env, config_obj, "errorIfExists", false);
     config.max_buffer_size = napi_object_get_property_uint32(env, config_obj, "maxBufferSize", 1 << 22);
     config.max_level_count = napi_object_get_property_uint32(env, config_obj, "maxLevelCount", 10);
-    config.reader.internal_node_cache_size = napi_object_get_property_uint32(env, config_obj, "internalNodeCacheSize", 64);
-    config.reader.leaf_node_cache_size = napi_object_get_property_uint32(env, config_obj, "leafNodeCacheSize", 8);
-    config.writer.enable_compression = napi_object_get_property_boolean(env, config_obj, "enableCompression", true);
-    config.writer.enable_prefix_encoding = napi_object_get_property_boolean(env, config_obj, "enablePrefixEncoding", true);
     config.writer.initial_pbt_size = napi_object_get_property_uint32(env, config_obj, "initialPbtSize", 1 << 23);
     config.writer.max_node_children = napi_object_get_property_uint32(env, config_obj, "maxNodeChildren", 16);
     if (context_reduce_callback)
