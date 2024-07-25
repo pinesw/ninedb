@@ -15,3 +15,11 @@
 - Add a thread to writer to do the flushing so user can continue writing another buffer?
 
 - If config is such that there is no compression/caching/whatever, then drop the cache and read directly from mmap when using the PBT.
+
+New:
+
+- Try with file operations rather than mmap
+
+- Add flags for compression vs. performance: varints/fixed ints, compression, key prefixes, read cache (RLU)
+
+- Refactor write/read methods: return length of written bytes, no pointer faffing

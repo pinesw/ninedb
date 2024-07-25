@@ -13,6 +13,6 @@ public class DbConfig {
     public Boolean enableCompression = null;
     public Boolean enablePrefixEncoding = null;
     public Integer initialPbtSize = null;
-    public Integer maxNodeEntries = null;
+    public Integer maxNodeChildren = null;
     public Function<byte[][], byte[]> reduce = null;
 }

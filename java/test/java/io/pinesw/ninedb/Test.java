@@ -6,7 +6,7 @@ public class Test {
     public static void TestKvDb() {
         DbConfig config = new DbConfig();
         config.deleteIfExists = true;
-        config.maxNodeEntries = 3;
+        config.maxNodeChildren = 3;
         config.reduce = (byte[][] keys) -> {
             return keys[0];
         };
@@ -38,7 +38,7 @@ public class Test {
     public static void TestHrDb() {
         DbConfig config = new DbConfig();
         config.deleteIfExists = true;
-        config.maxNodeEntries = 3;
+        config.maxNodeChildren = 3;
 
         try (HrDatabase db = HrDatabase.open("data/test-hrdb", config)) {
             db.add(0l, 0l, 0l, 0l, "value_1".getBytes());

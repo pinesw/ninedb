@@ -41,7 +41,7 @@ JNIEXPORT jlong JNICALL Java_io_pinesw_ninedb_KvDatabase_kvdb_1open(JNIEnv *env,
     config.writer.enable_compression = jni_object_get_property_boolean_boxed(env, obj_config, "enableCompression", true);
     config.writer.enable_prefix_encoding = jni_object_get_property_boolean_boxed(env, obj_config, "enablePrefixEncoding", true);
     config.writer.initial_pbt_size = jni_object_get_property_integer_boxed(env, obj_config, "initialPbtSize", 1 << 23);
-    config.writer.max_node_entries = jni_object_get_property_integer_boxed(env, obj_config, "maxNodeEntries", 16);
+    config.writer.max_node_children = jni_object_get_property_integer_boxed(env, obj_config, "maxNodeChildren", 16);
     if (context_reduce_callback)
     {
         config.writer.reduce = std::bind(&ContextReduceCallback::call, context_reduce_callback.get(), std::placeholders::_1, std::placeholders::_2);
@@ -361,7 +361,7 @@ JNIEXPORT jlong JNICALL Java_io_pinesw_ninedb_HrDatabase_hrdb_1open(JNIEnv *env,
     config.writer.enable_compression = jni_object_get_property_boolean_boxed(env, obj_config, "enableCompression", true);
     config.writer.enable_prefix_encoding = jni_object_get_property_boolean_boxed(env, obj_config, "enablePrefixEncoding", true);
     config.writer.initial_pbt_size = jni_object_get_property_integer_boxed(env, obj_config, "initialPbtSize", 1 << 23);
-    config.writer.max_node_entries = jni_object_get_property_integer_boxed(env, obj_config, "maxNodeEntries", 16);
+    config.writer.max_node_children = jni_object_get_property_integer_boxed(env, obj_config, "maxNodeChildren", 16);
 
     try
     {

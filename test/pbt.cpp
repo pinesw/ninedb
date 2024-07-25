@@ -163,7 +163,7 @@ void test_reduce()
     generate_values_sequence(values, 100);
 
     pbt::WriterConfig config;
-    config.max_node_entries = 4;
+    config.max_node_children = 4;
     config.reduce = [](const std::vector<std::string> &values, std::string &reduced_value)
     {
         std::string_view result;

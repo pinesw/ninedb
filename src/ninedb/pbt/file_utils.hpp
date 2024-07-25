@@ -15,18 +15,18 @@ namespace ninedb::pbt
         ZonePbtReader;
 
         std::string buffer;
-        buffer.resize(detail::Format::sizeof_footer());
+        buffer.resize(detail::Footer::size_of());
         std::ifstream file;
         file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
         file.open(file_path, std::ios::binary);
-        file.seekg(-detail::Format::sizeof_footer(), std::ios::end);
-        file.read(buffer.data(), detail::Format::sizeof_footer());
+        file.seekg(-detail::Footer::size_of(), std::ios::end);
+        file.read(buffer.data(), detail::Footer::size_of());
         file.close();
 
         uint8_t *buffer_ptr = (uint8_t *)buffer.data();
         detail::Footer footer;
-        detail::Format::read_footer(buffer_ptr, footer);
-        detail::Format::validate_footer(footer);
+        detail::Footer::read(buffer_ptr, footer);
+        footer.validate();
 
         return footer;
     }

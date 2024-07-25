@@ -4,12 +4,10 @@
 #include <stdexcept>
 #include <string>
 
-#include "../../detail/profiling.hpp"
-
 #include <boost/interprocess/file_mapping.hpp>
 #include <boost/interprocess/mapped_region.hpp>
 
-// TODO: try with file operations rather than mmap.
+#include "../../detail/profiling.hpp"
 
 namespace ninedb::pbt::detail
 {

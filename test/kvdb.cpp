@@ -16,8 +16,6 @@ Config get_test_config(bool delete_if_exists = true)
     config.delete_if_exists = delete_if_exists;
     config.max_buffer_size = 1 << 16;
     config.max_level_count = 2;
-    config.writer.enable_compression = true;
-    config.writer.enable_prefix_encoding = true;
     return config;
 }
 
@@ -25,9 +23,7 @@ Config get_benchmark_config()
 {
     Config config;
     config.delete_if_exists = true;
-    // config.writer.max_node_entries = 16;
-    config.writer.enable_compression = true;
-    config.writer.enable_prefix_encoding = true;
+    // config.writer.max_node_children = 16;
     return config;
 }
 
@@ -96,7 +92,7 @@ void test_get_by_index()
     }
     db.flush();
 
-    std::string key;
+    std::string_view key;
     std::string_view value;
     for (uint64_t i = 0; i < keys.size(); i++)
     {

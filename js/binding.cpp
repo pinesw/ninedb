@@ -45,7 +45,7 @@ NAPI_METHOD(kvdb_open)
     config.writer.enable_compression = napi_object_get_property_boolean(env, config_obj, "enableCompression", true);
     config.writer.enable_prefix_encoding = napi_object_get_property_boolean(env, config_obj, "enablePrefixEncoding", true);
     config.writer.initial_pbt_size = napi_object_get_property_uint32(env, config_obj, "initialPbtSize", 1 << 23);
-    config.writer.max_node_entries = napi_object_get_property_uint32(env, config_obj, "maxNodeEntries", 16);
+    config.writer.max_node_children = napi_object_get_property_uint32(env, config_obj, "maxNodeChildren", 16);
     if (context_reduce_callback)
     {
         config.writer.reduce = std::bind(&ContextReduceCallback::call, context_reduce_callback.get(), std::placeholders::_1, std::placeholders::_2);
@@ -421,7 +421,7 @@ NAPI_METHOD(hrdb_open)
     config.writer.enable_compression = napi_object_get_property_boolean(env, config_obj, "enableCompression", true);
     config.writer.enable_prefix_encoding = napi_object_get_property_boolean(env, config_obj, "enablePrefixEncoding", true);
     config.writer.initial_pbt_size = napi_object_get_property_uint32(env, config_obj, "initialPbtSize", 1 << 23);
-    config.writer.max_node_entries = napi_object_get_property_uint32(env, config_obj, "maxNodeEntries", 16);
+    config.writer.max_node_children = napi_object_get_property_uint32(env, config_obj, "maxNodeChildren", 16);
 
     try
     {

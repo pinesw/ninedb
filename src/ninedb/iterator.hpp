@@ -15,7 +15,7 @@ namespace ninedb
             return itrs[current].is_end();
         }
 
-        std::string get_key() const
+        std::string_view get_key() const
         {
             return keys[current];
         }
@@ -32,7 +32,7 @@ namespace ninedb
 
         void get_value(std::string_view &value) const
         {
-            itrs[current].get_value(value);
+            value = itrs[current].get_value();
         }
 
         void next()
@@ -40,7 +40,7 @@ namespace ninedb
             itrs[current].next();
             if (!itrs[current].is_end())
             {
-                itrs[current].get_key(keys[current]);
+                keys[current] = itrs[current].get_key();
             }
             current = get_min_index();
         }
@@ -53,7 +53,7 @@ namespace ninedb
             {
                 if (!this->itrs[i].is_end())
                 {
-                    this->itrs[i].get_key(keys[i]);
+                    keys[i] = this->itrs[i].get_key();
                 }
             }
             current = get_min_index();
@@ -61,7 +61,7 @@ namespace ninedb
 
     private:
         std::vector<pbt::Iterator> itrs;
-        std::vector<std::string> keys;
+        std::vector<std::string_view> keys;
         uint64_t current;
 
         uint64_t get_min_index() const

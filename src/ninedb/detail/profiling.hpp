@@ -8,6 +8,7 @@
 #define ZonePbtWriter ZoneScoped
 #define ZonePbtWriterN ZoneScopedN
 #define ZonePbtFormat ZoneScoped
+#define ZonePbtStructures ZoneScoped
 #define ZonePbtStorage ZoneScoped
 #define ZonePbtIterator ZoneScoped
 #define ZoneSkipList ZoneScoped
@@ -22,6 +23,7 @@
 #define ZonePbtWriter
 #define ZonePbtWriterN
 #define ZonePbtFormat
+#define ZonePbtStructures
 #define ZonePbtStorage
 #define ZonePbtIterator
 #define ZoneSkipList

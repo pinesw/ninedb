@@ -89,7 +89,7 @@ namespace ninedb::detail::level_manager
                 std::sort(level.indices.begin(), level.indices.end());
             }
             auto footer = pbt::read_footer(max_index_file_path);
-            state.global_counter = footer.global_counter + footer.num_entries;
+            state.global_counter = footer.global_end;
         }
 
         std::vector<std::string> get_unmerged_files() const

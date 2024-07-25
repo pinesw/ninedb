@@ -19,7 +19,7 @@ export interface DbConfig {
     enableCompression?: boolean;
     enablePrefixEncoding?: boolean;
     initialPbtSize?: number;
-    maxNodeEntries?: number;
+    maxNodeChildren?: number;
     reduce?: (values: Buffer) => Buffer;
 }
 

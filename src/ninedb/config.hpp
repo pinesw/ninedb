@@ -25,17 +25,8 @@ namespace ninedb
         pbt::WriterConfig writer = {
             16,
             1 << 23,
-            false,
-            false,
             nullptr,
-        };
-
-        /**
-         * The config for readers of the db.
-         */
-        pbt::ReaderConfig reader = {
-            64,
-            8,
+            false,
         };
 
         /**

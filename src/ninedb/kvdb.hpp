@@ -113,7 +113,7 @@ namespace ninedb
          * If the index is out of range, false will be returned.
          * Otherwise, true will be returned and the key and value will be set.
          */
-        bool at(uint64_t index, std::string &key, std::string_view &value) const
+        bool at(uint64_t index, std::string_view &key, std::string_view &value) const
         {
             ZoneDb;
 
@@ -134,11 +134,11 @@ namespace ninedb
          * Get the key-value pair at the given index.
          * If the index is out of range, std::nullopt will be returned.
          */
-        std::optional<std::pair<std::string, std::string_view>> at(uint64_t index) const
+        std::optional<std::pair<std::string_view, std::string_view>> at(uint64_t index) const
         {
             ZoneDb;
 
-            std::pair<std::string, std::string_view> result;
+            std::pair<std::string_view, std::string_view> result;
             if (at(index, result.first, result.second))
             {
                 return result;
@@ -255,7 +255,7 @@ namespace ninedb
             std::vector<std::string> unmerged_files = level_manager.get_unmerged_files();
             for (const auto &file : unmerged_files)
             {
-                readers[file] = std::make_shared<pbt::Reader>(file, get_reader_config(config));
+                readers[file] = std::make_shared<pbt::Reader>(file);
             }
         }
 
@@ -264,23 +264,11 @@ namespace ninedb
             ZoneDb;
 
             pbt::WriterConfig writer_config;
-            writer_config.max_node_entries = config.writer.max_node_entries;
+            writer_config.max_node_children = config.writer.max_node_children;
             writer_config.initial_pbt_size = config.writer.initial_pbt_size;
-            writer_config.enable_compression = config.writer.enable_compression;
-            writer_config.enable_prefix_encoding = config.writer.enable_prefix_encoding;
             writer_config.reduce = config.writer.reduce;
             writer_config.error_if_exists = false;
             return writer_config;
-        }
-
-        static pbt::ReaderConfig get_reader_config(const Config &config)
-        {
-            ZoneDb;
-
-            pbt::ReaderConfig reader_config;
-            reader_config.internal_node_cache_size = config.reader.internal_node_cache_size;
-            reader_config.leaf_node_cache_size = config.reader.leaf_node_cache_size;
-            return reader_config;
         }
 
         static detail::level_manager::Config get_level_manager_config(const Config &config)
@@ -314,7 +302,7 @@ namespace ninedb
             level_manager.advance_level_0();
             level_manager.set_global_counter(level_manager.get_global_counter() + num_entries);
 
-            readers[file_name] = std::make_shared<pbt::Reader>(writer.to_reader(get_reader_config(config)));
+            readers[file_name] = std::make_shared<pbt::Reader>(writer.to_reader());
         }
 
         void perform_merge_operation(const detail::level_manager::MergeOperation &merge_operation)
@@ -327,7 +315,7 @@ namespace ninedb
             {
                 std::string file_name = level_manager.get_file_path(index, level);
                 src_readers.push_back(readers[file_name]);
-                global_counter = std::min(global_counter, readers[file_name]->get_global_counter());
+                global_counter = std::min(global_counter, readers[file_name]->get_global_start());
             }
 
             std::string target_file_name = level_manager.get_file_path(merge_operation.dst_index, merge_operation.dst_level);
@@ -337,7 +325,7 @@ namespace ninedb
 
             level_manager.apply_merge_operation(merge_operation);
 
-            readers[target_file_name] = std::make_shared<pbt::Reader>(writer.to_reader(get_reader_config(config)));
+            readers[target_file_name] = std::make_shared<pbt::Reader>(writer.to_reader());
             for (const auto &[level, index] : merge_operation.src_levels_and_indices)
             {
                 std::string file_name = level_manager.get_file_path(index, level);
