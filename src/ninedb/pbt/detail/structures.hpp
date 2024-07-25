@@ -407,9 +407,7 @@ namespace ninedb::pbt::detail
 
             uint8_t *address = this->address + sizeof(uint16_t) + 2 * sizeof(uint64_t) + 5 * sizeof(uint64_t) * i;
             uint64_t child_entry_count;
-            address += Format::skip_uint64();
-            address += Format::skip_uint64();
-            address += Format::skip_uint64();
+            address += Format::skip_uint64(3);
             address += Format::read_uint64(address, child_entry_count);
 
             return child_entry_count;
@@ -421,10 +419,7 @@ namespace ninedb::pbt::detail
 
             uint8_t *address = this->address + sizeof(uint16_t) + 2 * sizeof(uint64_t) + 5 * sizeof(uint64_t) * i;
             uint64_t child_offset;
-            address += Format::skip_uint64();
-            address += Format::skip_uint64();
-            address += Format::skip_uint64();
-            address += Format::skip_uint64();
+            address += Format::skip_uint64(4);
             address += Format::read_uint64(address, child_offset);
 
             return child_offset;

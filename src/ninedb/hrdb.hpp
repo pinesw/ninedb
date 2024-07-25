@@ -146,7 +146,7 @@ namespace ninedb
             return bx0 <= ax1 && bx1 >= ax0 && by0 <= ay1 && by1 >= ay0;
         }
 
-        static void reduce(const std::vector<std::string> &values, std::string &reduced_value)
+        static void reduce(const std::vector<std::string_view> &values, std::string &reduced_value)
         {
             ZoneDb;
 

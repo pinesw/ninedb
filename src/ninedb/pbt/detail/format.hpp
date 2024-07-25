@@ -126,19 +126,19 @@ namespace ninedb::pbt::detail
             return sizeof(uint64_t);
         }
 
-        static constexpr uint64_t skip_uint16()
+        static constexpr uint64_t skip_uint16(uint64_t count = 1)
         {
-            return sizeof(uint16_t);
+            return count * sizeof(uint16_t);
         }
 
-        static constexpr uint64_t skip_uint32()
+        static constexpr uint64_t skip_uint32(uint64_t count = 1)
         {
-            return sizeof(uint32_t);
+            return count * sizeof(uint32_t);
         }
 
-        static constexpr uint64_t skip_uint64()
+        static constexpr uint64_t skip_uint64(uint64_t count = 1)
         {
-            return sizeof(uint64_t);
+            return count * sizeof(uint64_t);
         }
 
         // static uint64_t read_varint64(uint8_t *&address)

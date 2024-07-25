@@ -125,7 +125,7 @@ JNIEXPORT jobject JNICALL Java_io_pinesw_ninedb_KvDatabase_kvdb_1at(JNIEnv *env,
 
     try
     {
-        std::optional<std::pair<std::string, std::string_view>> kv = context->kvdb.at(at);
+        std::optional<std::pair<std::string_view, std::string_view>> kv = context->kvdb.at(at);
         if (!kv.has_value())
         {
             return nullptr;
@@ -314,7 +314,7 @@ JNIEXPORT jbyteArray JNICALL Java_io_pinesw_ninedb_KvDbIterator_itr_1get_1key(JN
 
     try
     {
-        std::string key = context->itr.get_key();
+        std::string_view key = context->itr.get_key();
         jbyteArray result = env->NewByteArray(key.size());
         env->SetByteArrayRegion(result, 0, key.size(), reinterpret_cast<const jbyte *>(key.data()));
         return result;

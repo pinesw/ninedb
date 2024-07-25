@@ -132,7 +132,7 @@ NAPI_METHOD(kvdb_at)
     try
     {
         napi_value result;
-        std::string key;
+        std::string_view key;
         std::string_view value;
         if (context->kvdb.at(index, key, value))
         {
@@ -369,7 +369,7 @@ NAPI_METHOD(itr_get_key)
 
     try
     {
-        std::string key = iterator->itr.get_key();
+        std::string_view key = iterator->itr.get_key();
         return string_to_napi_buffer(env, key);
     }
     catch (const std::exception &e)
