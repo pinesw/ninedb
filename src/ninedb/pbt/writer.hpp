@@ -193,14 +193,15 @@ namespace ninedb::pbt
                     {
                         uint64_t child_entry_count;
                         uint64_t child_offset = read_offset;
+                        uint64_t child_size;
 
                         if (k == 0)
                         {
-                            read_offset = read_node_metadata(read_offset, i, child_entry_count, values, &keys[0], &keys[1]);
+                            child_size = read_node_metadata(read_offset, i, child_entry_count, values, &keys[0], &keys[1]);
                         }
                         else
                         {
-                            read_offset = read_node_metadata(read_offset, i, child_entry_count, values, nullptr, &keys[k + 1]);
+                            child_size = read_node_metadata(read_offset, i, child_entry_count, values, nullptr, &keys[k + 1]);
                         }
 
                         if (config.reduce != nullptr)
@@ -210,12 +211,14 @@ namespace ninedb::pbt
 
                         if (k == 0)
                         {
-                            buffer_internal.add_first_child(keys[0], keys[1], reduced_values[0], child_entry_count, child_offset);
+                            buffer_internal.add_first_child(keys[0], keys[1], reduced_values[0], child_entry_count, child_offset, child_size);
                         }
                         else
                         {
-                            buffer_internal.add_child(keys[k + 1], reduced_values[k], child_entry_count, child_offset);
+                            buffer_internal.add_child(keys[k + 1], reduced_values[k], child_entry_count, child_offset, child_size);
                         }
+
+                        read_offset += child_size;
                     }
 
                     append_node_internal(buffer_internal);
@@ -224,6 +227,7 @@ namespace ninedb::pbt
             }
 
             footer.root_offset = read_offset;
+            footer.root_size = write_offset - read_offset;
             append_footer(footer);
             storage->set_size(write_offset);
         }
@@ -298,11 +302,11 @@ namespace ninedb::pbt
             uint8_t *address = (uint8_t *)storage->get_address() + offset;
             if (level <= 1)
             {
-                return offset + read_node_leaf_metadata(address, entry_count, values, first_key, last_key);
+                return read_node_leaf_metadata(address, entry_count, values, first_key, last_key);
             }
             else
             {
-                return offset + read_node_internal_metadata(address, entry_count, values, first_key, last_key);
+                return read_node_internal_metadata(address, entry_count, values, first_key, last_key);
             }
         }
 
