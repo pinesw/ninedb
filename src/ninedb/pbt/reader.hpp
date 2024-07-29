@@ -50,7 +50,7 @@ namespace ninedb::pbt
          * If the key exists, the value is written to the given string.
          * If the key occurs multiple times, the value of the first occurrence is written.
          */
-        bool get(std::string_view key, std::string_view &value)
+        bool get(std::string_view key, std::string &value)
         {
             ZonePbtReader;
 
@@ -75,11 +75,11 @@ namespace ninedb::pbt
         /**
          * Get the value for the given key.
          */
-        std::optional<std::string_view> get(std::string_view key)
+        std::optional<std::string> get(std::string_view key)
         {
             ZonePbtReader;
 
-            std::string_view value;
+            std::string value;
             if (get(key, value))
             {
                 return value;
@@ -92,7 +92,7 @@ namespace ninedb::pbt
          * Returns true if the index is in bounds, false otherwise.
          * If the index is in bounds, the key and value are written to the given strings.
          */
-        bool at(uint64_t index, std::string_view &key, std::string_view &value)
+        bool at(uint64_t index, std::string &key, std::string &value)
         {
             ZonePbtReader;
 
@@ -119,12 +119,12 @@ namespace ninedb::pbt
          * Get the key and value at the given index.
          * The first element of the pair is the key, the second element is the value.
          */
-        std::optional<std::pair<std::string_view, std::string_view>> at(uint64_t index)
+        std::optional<std::pair<std::string, std::string>> at(uint64_t index)
         {
             ZonePbtReader;
 
-            std::string_view key;
-            std::string_view value;
+            std::string key;
+            std::string value;
             if (at(index, key, value))
             {
                 return std::make_pair(key, value);
@@ -258,7 +258,7 @@ namespace ninedb::pbt
          * At the leaf nodes, values tested positively against the predicate are added to the accumulator.
          * Internal nodes are also tested against the predicate on their reduced values, and their subtrees are skipped if the predicate returns false.
          */
-        void traverse(const std::function<bool(std::string_view value)> &predicate, std::vector<std::string_view> &accumulator)
+        void traverse(const std::function<bool(std::string_view value)> &predicate, std::vector<std::string> &accumulator)
         {
             ZonePbtReader;
 
@@ -267,7 +267,7 @@ namespace ninedb::pbt
                 return;
             }
 
-            traverse(predicate, accumulator, footer.root_offset, footer.tree_height);
+            traverse(predicate, accumulator, footer.root_offset, footer.root_size, footer.tree_height);
         }
 
         /**
@@ -284,31 +284,31 @@ namespace ninedb::pbt
         detail::Footer footer;
         std::shared_ptr<detail::Storage> storage;
 
-        void traverse(const std::function<bool(std::string_view value)> &predicate, std::vector<std::string_view> &accumulator, uint64_t offset, uint64_t height)
+        void traverse(const std::function<bool(std::string_view value)> &predicate, std::vector<std::string> &accumulator, uint64_t offset, uint64_t size, uint64_t height)
         {
             ZonePbtReader;
 
             if (height == 1)
             {
-                detail::NodeLeafRead node_leaf(offset_to_address(offset));
+                detail::NodeLeafRead node_leaf(offset, size, *storage);
 
                 for (uint64_t i = 0; i < node_leaf.num_children(); i++)
                 {
                     if (predicate(node_leaf.value(i)))
                     {
-                        accumulator.push_back(node_leaf.value(i));
+                        accumulator.push_back(std::string(node_leaf.value(i)));
                     }
                 }
             }
             else
             {
-                detail::NodeInternalRead node_internal(offset_to_address(offset));
+                detail::NodeInternalRead node_internal(offset, size, *storage);
 
                 for (uint64_t i = 0; i < node_internal.num_children(); i++)
                 {
                     if (predicate(node_internal.reduced_value(i)))
                     {
-                        traverse(predicate, accumulator, node_internal.child_offset(i), height - 1);
+                        traverse(predicate, accumulator, node_internal.child_offset(i), node_internal.child_size(i), height - 1);
                     }
                 }
             }
@@ -319,19 +319,21 @@ namespace ninedb::pbt
             ZonePbtReader;
 
             uint64_t offset = footer.root_offset;
+            uint64_t size = footer.root_size;
             uint64_t height = footer.tree_height;
 
             detail::NodeInternalRead node_internal(nullptr);
 
             while (height >= 2)
             {
-                node_internal.address = offset_to_address(offset);
+                node_internal.set_offset_and_size(offset, size, *storage);
 
                 for (uint64_t i = 0; i < node_internal.num_children(); i++)
                 {
                     if (index < node_internal.child_entry_count(i))
                     {
                         offset = node_internal.child_offset(i);
+                        size = node_internal.child_size(i);
                         height--;
                         goto next_level;
                     }
@@ -344,7 +346,7 @@ namespace ninedb::pbt
             next_level:;
             }
 
-            node_leaf.address = offset_to_address(offset);
+            node_leaf.set_offset_and_size(offset, size, *storage);
 
             if (node_leaf.num_children() <= 0 || index >= node_leaf.num_children())
             {
@@ -361,13 +363,14 @@ namespace ninedb::pbt
             ZonePbtReader;
 
             uint64_t offset = footer.root_offset;
+            uint64_t size = footer.root_size;
             uint64_t height = footer.tree_height;
 
             detail::NodeInternalRead node_internal(nullptr);
 
             while (height >= 2)
             {
-                node_internal.address = offset_to_address(offset);
+                node_internal.set_offset_and_size(offset, size, *storage);
 
                 if (mode == EXACT)
                 {
@@ -382,6 +385,7 @@ namespace ninedb::pbt
                     if (key.compare(node_internal.right_key(i)) <= 0)
                     {
                         offset = node_internal.child_offset(i);
+                        size = node_internal.child_size(i);
                         height--;
                         goto next_level;
                     }
@@ -392,7 +396,7 @@ namespace ninedb::pbt
             next_level:;
             }
 
-            node_leaf.address = offset_to_address(offset);
+            node_leaf.set_offset_and_size(offset, size, *storage);
 
             if (node_leaf.num_children() <= 0)
             {
@@ -426,23 +430,8 @@ namespace ninedb::pbt
         {
             ZonePbtReader;
 
-            uint8_t *address = offset_to_address(storage->get_size() - detail::Footer::size_of());
-            detail::Footer::read(address, footer);
+            detail::Footer::read(storage->get_size() - detail::Footer::size_of(), *storage, footer);
             footer.validate();
-        }
-
-        uint8_t *offset_to_address(uint64_t offset) const
-        {
-            ZonePbtReader;
-
-            return (uint8_t *)storage->get_address() + offset;
-        }
-
-        uint64_t address_to_offset(uint8_t *address) const
-        {
-            ZonePbtReader;
-
-            return (uint64_t)(address - (uint8_t *)storage->get_address());
         }
     };
 }

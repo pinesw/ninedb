@@ -39,14 +39,40 @@ namespace ninedb::pbt::detail
         Storage(const Storage &) = delete;
         Storage &operator=(const Storage &) = delete;
 
-        /**
-         * Get the memory address of the beginning of the storage.
-         */
-        void *get_address() const
+        // /**
+        //  * Get the memory address of the beginning of the storage.
+        //  */
+        // void *get_address() const
+        // {
+        //     ZonePbtStorage;
+
+        //     return address;
+        // }
+
+        void ensure_size(std::size_t size)
         {
             ZonePbtStorage;
 
-            return address;
+            if (region->get_size() < size)
+            {
+                uint64_t new_size = std::max<uint64_t>(size, 2 * region->get_size());
+                set_size(new_size);
+            }
+        }
+
+        void write(uint64_t offset, const void *data, std::size_t size)
+        {
+            ZonePbtStorage;
+
+            ensure_size(offset + size);
+            memcpy(static_cast<char *>(address) + offset, data, size);
+        }
+
+        void read(uint64_t offset, void *data, std::size_t size) const
+        {
+            ZonePbtStorage;
+
+            memcpy(data, static_cast<char *>(address) + offset, size);
         }
 
         /**

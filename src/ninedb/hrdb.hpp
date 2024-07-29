@@ -67,11 +67,11 @@ namespace ninedb
          * Search for values in the spatial db.
          * The search will be performed using the given bounding box.
          */
-        std::vector<std::string_view> search(uint32_t x0, uint32_t y0, uint32_t x1, uint32_t y1) const
+        std::vector<std::string> search(uint32_t x0, uint32_t y0, uint32_t x1, uint32_t y1) const
         {
             ZoneDb;
 
-            std::vector<std::string_view> values;
+            std::vector<std::string> values;
             kvdb.traverse(
                 [x0, y0, x1, y1](std::string_view value)
                 {
@@ -83,7 +83,7 @@ namespace ninedb
                     return intersects(x0, y0, x1, y1, bx0, by0, bx1, by1);
                 },
                 values);
-            for (std::string_view &value : values)
+            for (std::string &value : values)
             {
                 value.remove_prefix(4 * sizeof(uint32_t));
             }

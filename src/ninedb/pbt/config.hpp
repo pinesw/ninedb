@@ -37,7 +37,7 @@ namespace ninedb::pbt
          * The reduced value is then stored in the parent node.
          * This can be used to implement fast queries on aggregated data.
          */
-        std::function<void(const std::vector<std::string_view> &values, std::string &reduced_value)> reduce = nullptr;
+        std::function<void(const std::vector<std::string> &values, std::string &reduced_value)> reduce = nullptr;
 
         /**
          * If true, an error is thrown if the file already exists.

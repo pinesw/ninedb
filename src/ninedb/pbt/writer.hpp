@@ -94,7 +94,7 @@ namespace ninedb::pbt
             ZonePbtWriter;
 
             std::vector<Iterator> itrs;
-            std::vector<std::string_view> keys;
+            std::vector<std::string> keys;
 
             uint64_t num_storages = readers.size();
             itrs.reserve(num_storages);
@@ -173,8 +173,8 @@ namespace ninedb::pbt
             footer.global_start = global_start;
             footer.global_end = global_start + num_entries;
 
-            std::vector<std::string_view> keys;
-            std::vector<std::string_view> values;
+            std::vector<std::string> keys;
+            std::vector<std::string> values;
             std::vector<std::string> reduced_values;
             keys.resize(config.max_node_children + 1);
             values.resize(config.max_node_children);
@@ -193,14 +193,15 @@ namespace ninedb::pbt
                     {
                         uint64_t child_entry_count;
                         uint64_t child_offset = read_offset;
+                        uint64_t child_size;
 
                         if (k == 0)
                         {
-                            read_offset = read_node_metadata(read_offset, i, child_entry_count, values, &keys[0], &keys[1]);
+                            child_size = read_node_metadata(read_offset, i, child_entry_count, values, &keys[0], &keys[1]);
                         }
                         else
                         {
-                            read_offset = read_node_metadata(read_offset, i, child_entry_count, values, nullptr, &keys[k + 1]);
+                            child_size = read_node_metadata(read_offset, i, child_entry_count, values, nullptr, &keys[k + 1]);
                         }
 
                         if (config.reduce != nullptr)
@@ -210,12 +211,14 @@ namespace ninedb::pbt
 
                         if (k == 0)
                         {
-                            buffer_internal.add_first_child(keys[0], keys[1], reduced_values[0], child_entry_count, child_offset);
+                            buffer_internal.add_first_child(keys[0], keys[1], reduced_values[0], child_entry_count, child_offset, child_size);
                         }
                         else
                         {
-                            buffer_internal.add_child(keys[k + 1], reduced_values[k], child_entry_count, child_offset);
+                            buffer_internal.add_child(keys[k + 1], reduced_values[k], child_entry_count, child_offset, child_size);
                         }
+
+                        read_offset += child_size;
                     }
 
                     append_node_internal(buffer_internal);
@@ -224,6 +227,7 @@ namespace ninedb::pbt
             }
 
             footer.root_offset = read_offset;
+            footer.root_size = write_offset - read_offset;
             append_footer(footer);
             storage->set_size(write_offset);
         }
@@ -253,62 +257,44 @@ namespace ninedb::pbt
             buffer_leaf.clear();
         }
 
-        void ensure_space(uint64_t size)
-        {
-            ZonePbtWriter;
-
-            if (storage->get_size() < write_offset + size)
-            {
-                uint64_t new_size = std::max<uint64_t>(write_offset + size, 2 * storage->get_size());
-                storage->set_size(new_size);
-            }
-        }
-
         void append_footer(const detail::Footer &footer)
         {
             ZonePbtWriter;
 
-            ensure_space(detail::Footer::size_of());
-            uint8_t *address = (uint8_t *)storage->get_address() + write_offset;
-            write_offset += footer.write(address);
+            write_offset += footer.write(write_offset, *storage);
         }
 
         void append_node_leaf(const detail::NodeLeafWrite &node)
         {
             ZonePbtWriter;
 
-            uint8_t *address = (uint8_t *)storage->get_address() + write_offset;
-            ensure_space(node.size_of());
-            write_offset += node.write(address);
+            write_offset += node.write(write_offset, *storage);
         }
 
         void append_node_internal(const detail::NodeInternalWrite &node)
         {
             ZonePbtWriter;
 
-            uint8_t *address = (uint8_t *)storage->get_address() + write_offset;
-            ensure_space(node.size_of());
-            write_offset += node.write(address);
+            write_offset += node.write(write_offset, *storage);
         }
 
-        uint64_t read_node_metadata(uint64_t offset, uint64_t level, uint64_t &entry_count, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
+        uint64_t read_node_metadata(uint64_t offset, uint64_t level, uint64_t &entry_count, std::vector<std::string> &values, std::string *first_key, std::string *last_key) const
         {
             ZonePbtWriter;
 
-            uint8_t *address = (uint8_t *)storage->get_address() + offset;
             if (level <= 1)
             {
-                return offset + read_node_leaf_metadata(address, entry_count, values, first_key, last_key);
+                return read_node_leaf_metadata(offset, entry_count, values, first_key, last_key);
             }
             else
             {
-                return offset + read_node_internal_metadata(address, entry_count, values, first_key, last_key);
+                return read_node_internal_metadata(offset, entry_count, values, first_key, last_key);
             }
         }
 
-        uint64_t read_node_leaf_metadata(uint8_t *address, uint64_t &entry_count, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
+        uint64_t read_node_leaf_metadata(uint64_t offset, uint64_t &entry_count, std::vector<std::string> &values, std::string *first_key, std::string *last_key) const
         {
-            detail::NodeLeafRead node(address);
+            detail::NodeLeafRead node(offset, *storage);
             entry_count = node.num_children();
             values.resize(entry_count);
             for (uint64_t i = 0; i < entry_count; i++)
@@ -326,9 +312,9 @@ namespace ninedb::pbt
             return node.size_of();
         }
 
-        uint64_t read_node_internal_metadata(uint8_t *address, uint64_t &entry_count, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
+        uint64_t read_node_internal_metadata(uint64_t offset, uint64_t &entry_count, std::vector<std::string> &values, std::string *first_key, std::string *last_key) const
         {
-            detail::NodeInternalRead node(address);
+            detail::NodeInternalRead node(offset, *storage);
             uint64_t num_children = node.num_children();
             entry_count = 0;
             for (uint64_t i = 0; i < num_children; i++)
