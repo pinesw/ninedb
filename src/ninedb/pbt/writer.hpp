@@ -48,11 +48,11 @@ namespace ninedb::pbt
                 ofs.close();
             }
             std::filesystem::resize_file(path, config.initial_pbt_size);
-            storage = std::make_shared<detail::Storage>(path, false);
+            storage = std::make_shared<detail::StorageMmap>(path, false);
             storage->clear();
         }
 
-        Writer(uint64_t global_start, const std::shared_ptr<detail::Storage> &storage, const WriterConfig &config)
+        Writer(uint64_t global_start, const std::shared_ptr<detail::StorageMmap> &storage, const WriterConfig &config)
             : global_start(global_start), storage(storage), config(config)
         {
             storage->clear();
@@ -230,7 +230,7 @@ namespace ninedb::pbt
 
     private:
         WriterConfig config;
-        std::shared_ptr<detail::Storage> storage;
+        std::shared_ptr<detail::StorageMmap> storage;
         uint64_t global_start;
         uint64_t write_offset = 0;
         uint64_t num_entries = 0;

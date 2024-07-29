@@ -29,9 +29,9 @@ namespace ninedb::pbt
     struct Reader
     {
         Reader(const std::string &path)
-            : Reader(std::make_shared<detail::Storage>(path, true)) {}
+            : Reader(std::make_shared<detail::StorageMmap>(path, true)) {}
 
-        Reader(const std::shared_ptr<detail::Storage> &storage)
+        Reader(const std::shared_ptr<detail::StorageMmap> &storage)
             : storage(storage)
         {
             read_footer();
@@ -282,7 +282,7 @@ namespace ninedb::pbt
 
     private:
         detail::Footer footer;
-        std::shared_ptr<detail::Storage> storage;
+        std::shared_ptr<detail::StorageMmap> storage;
 
         void traverse(const std::function<bool(std::string_view value)> &predicate, std::vector<std::string_view> &accumulator, uint64_t offset, uint64_t height)
         {
@@ -436,13 +436,6 @@ namespace ninedb::pbt
             ZonePbtReader;
 
             return (uint8_t *)storage->get_address() + offset;
-        }
-
-        uint64_t address_to_offset(uint8_t *address) const
-        {
-            ZonePbtReader;
-
-            return (uint64_t)(address - (uint8_t *)storage->get_address());
         }
     };
 }

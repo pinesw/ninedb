@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "./format.hpp"
+#include "./storage.hpp"
 
 namespace ninedb::pbt::detail
 {
@@ -174,9 +175,13 @@ namespace ninedb::pbt::detail
      */
     struct NodeLeafRead
     {
-        uint8_t *address;
+        StorageMmap &storage;
+        uint64_t offset;
+        // uint8_t *address;
 
-        NodeLeafRead(uint8_t *address) : address(address) {}
+        // NodeLeafRead(uint8_t *address) : address(address) {}
+
+        NodeLeafRead(StorageMmap &storage, uint64_t offset) : storage(storage), offset(offset) {}
 
         uint64_t size_of() const
         {
@@ -329,9 +334,13 @@ namespace ninedb::pbt::detail
      */
     struct NodeInternalRead
     {
-        uint8_t *address;
+        StorageMmap &storage;
+        uint64_t offset;
+        // uint8_t *address;
 
-        NodeInternalRead(uint8_t *address) : address(address) {}
+        // NodeInternalRead(uint8_t *address) : address(address) {}
+
+        NodeInternalRead(StorageMmap &storage, uint64_t offset) : storage(storage), offset(offset) {}
 
         uint64_t size_of() const
         {
