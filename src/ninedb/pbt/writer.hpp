@@ -301,43 +301,43 @@ namespace ninedb::pbt
 
         uint64_t read_node_leaf_metadata(uint8_t *address, uint64_t &entry_count, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
         {
-            entry_count = detail::NodeLeafRead::num_children(address);
+            entry_count = detail::NodeLeafRead::read_num_children(address);
             values.resize(entry_count);
             for (uint64_t i = 0; i < entry_count; i++)
             {
-                values[i] = detail::NodeLeafRead::value(address, i);
+                values[i] = detail::NodeLeafRead::read_value(address, i);
             }
             if (first_key != nullptr)
             {
-                *first_key = detail::NodeLeafRead::key(address, 0);
+                *first_key = detail::NodeLeafRead::read_key(address, 0);
             }
             if (last_key != nullptr)
             {
-                *last_key = detail::NodeLeafRead::key(address, entry_count - 1);
+                *last_key = detail::NodeLeafRead::read_key(address, entry_count - 1);
             }
             return detail::NodeLeafRead::size_of(address);
         }
 
         uint64_t read_node_internal_metadata(uint8_t *address, uint64_t &entry_count, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
         {
-            uint64_t num_children = detail::NodeInternalRead::num_children(address);
+            uint64_t num_children = detail::NodeInternalRead::read_num_children(address);
             entry_count = 0;
             for (uint64_t i = 0; i < num_children; i++)
             {
-                entry_count += detail::NodeInternalRead::child_entry_count(address, i);
+                entry_count += detail::NodeInternalRead::read_child_entry_count(address, i);
             }
             values.resize(num_children);
             for (uint64_t i = 0; i < num_children; i++)
             {
-                values[i] = detail::NodeInternalRead::reduced_value(address, i);
+                values[i] = detail::NodeInternalRead::read_reduced_value(address, i);
             }
             if (first_key != nullptr)
             {
-                *first_key = detail::NodeInternalRead::left_key(address);
+                *first_key = detail::NodeInternalRead::read_left_key(address);
             }
             if (last_key != nullptr)
             {
-                *last_key = detail::NodeInternalRead::right_key(address, num_children - 1);
+                *last_key = detail::NodeInternalRead::read_right_key(address, num_children - 1);
             }
             return detail::NodeInternalRead::size_of(address);
         }

@@ -24,6 +24,7 @@ namespace ninedb::pbt
             if (offset < end_offset)
             {
                 next_address += detail::NodeLeafRead::size_of(current_address);
+                current_num_children = detail::NodeLeafRead::read_num_children(current_address);
             }
         }
 
@@ -34,7 +35,7 @@ namespace ninedb::pbt
         {
             ZonePbtIterator;
 
-            return detail::NodeLeafRead::key(current_address, current_index);
+            return detail::NodeLeafRead::read_key(current_address, current_index);
         }
 
         /**
@@ -44,7 +45,7 @@ namespace ninedb::pbt
         {
             ZonePbtIterator;
 
-            return detail::NodeLeafRead::value(current_address, current_index);
+            return detail::NodeLeafRead::read_value(current_address, current_index);
         }
 
         /**
@@ -55,7 +56,7 @@ namespace ninedb::pbt
             ZonePbtIterator;
 
             current_index++;
-            if (current_index >= detail::NodeLeafRead::num_children(current_address))
+            if (current_index >= current_num_children)
             {
                 current_index = 0;
                 current_address = next_address;
@@ -79,6 +80,7 @@ namespace ninedb::pbt
     private:
         std::shared_ptr<detail::Storage> storage;
         uint64_t current_index;
+        uint64_t current_num_children;
         uint8_t *current_address;
         uint8_t *next_address;
         uint8_t *end_address;
