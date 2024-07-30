@@ -308,9 +308,11 @@ namespace ninedb::pbt
 
                 for (uint64_t i = 0; i < num_children; i++)
                 {
-                    if (predicate(detail::NodeLeafRead::read_value(node_leaf_address, i)))
+                    std::string_view value = detail::NodeLeafRead::read_value(node_leaf_address, i);
+
+                    if (predicate(value))
                     {
-                        accumulator.push_back(detail::NodeLeafRead::read_value(node_leaf_address, i));
+                        accumulator.push_back(value);
                     }
                 }
             }
@@ -329,16 +331,20 @@ namespace ninedb::pbt
             {
                 node_internal_address = offset_to_address(offset);
 
-                for (uint64_t i = 0; i < detail::NodeInternalRead::read_num_children(node_internal_address); i++)
+                uint64_t num_children = detail::NodeInternalRead::read_num_children(node_internal_address);
+
+                for (uint64_t i = 0; i < num_children; i++)
                 {
-                    if (index < detail::NodeInternalRead::read_child_entry_count(node_internal_address, i))
+                    uint64_t child_entry_count = detail::NodeInternalRead::read_child_entry_count(node_internal_address, i);
+
+                    if (index < child_entry_count)
                     {
                         offset = detail::NodeInternalRead::read_child_offset(node_internal_address, i);
                         height--;
                         goto next_level;
                     }
 
-                    index -= detail::NodeInternalRead::read_child_entry_count(node_internal_address, i);
+                    index -= child_entry_count;
                 }
 
                 return;
@@ -380,7 +386,9 @@ namespace ninedb::pbt
                     }
                 }
 
-                for (uint64_t i = 0; i < detail::NodeInternalRead::read_num_children(node_internal_address); i++)
+                uint64_t num_children = detail::NodeInternalRead::read_num_children(node_internal_address);
+
+                for (uint64_t i = 0; i < num_children; i++)
                 {
                     if (key.compare(detail::NodeInternalRead::read_right_key(node_internal_address, i)) <= 0)
                     {
