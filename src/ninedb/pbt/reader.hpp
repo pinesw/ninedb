@@ -59,15 +59,15 @@ namespace ninedb::pbt
                 return false;
             }
 
-            uint64_t node_offset = std::numeric_limits<uint64_t>::max();
-            uint64_t entry_index = 0;
+            uint64_t entry_index = std::numeric_limits<uint64_t>::max();
             uint8_t *node_leaf_address = nullptr;
-            find<EXACT>(key, node_leaf_address, node_offset, entry_index);
+            find<EXACT>(key, node_leaf_address, entry_index, nullptr);
 
-            if (node_offset >= std::numeric_limits<uint64_t>::max())
+            if (entry_index == std::numeric_limits<uint64_t>::max())
             {
                 return false;
             }
+
             value = detail::NodeLeaf::read_value(node_leaf_address, entry_index);
             return true;
         }
@@ -101,15 +101,15 @@ namespace ninedb::pbt
                 return false;
             }
 
-            uint64_t node_offset = std::numeric_limits<uint64_t>::max();
-            uint64_t entry_index = 0;
+            uint64_t entry_index = std::numeric_limits<uint64_t>::max();
             uint8_t *node_leaf_address = nullptr;
-            find_index(index, node_leaf_address, node_offset, entry_index);
+            find_index(index, node_leaf_address, entry_index);
 
-            if (node_offset >= std::numeric_limits<uint64_t>::max())
+            if (entry_index == std::numeric_limits<uint64_t>::max())
             {
                 return false;
             }
+
             key = detail::NodeLeaf::read_key(node_leaf_address, entry_index);
             value = detail::NodeLeaf::read_value(node_leaf_address, entry_index);
             return true;
@@ -147,12 +147,12 @@ namespace ninedb::pbt
                 return end();
             }
 
-            uint64_t node_offset = footer.level_0_end;
-            uint64_t entry_index = 0;
+            uint64_t entry_index = std::numeric_limits<uint64_t>::max();
+            uint64_t entry_start = 0;
             uint8_t *node_leaf_address = nullptr;
-            find<GREATER_OR_EQUAL>(key, node_leaf_address, node_offset, entry_index);
+            find<GREATER_OR_EQUAL>(key, node_leaf_address, entry_index, &entry_start);
 
-            return Iterator(storage, entry_index, node_offset, footer.level_0_end);
+            return Iterator(node_leaf_address, entry_index, footer.global_start + entry_start, footer.global_end);
         }
 
         /**
@@ -223,12 +223,15 @@ namespace ninedb::pbt
                 return end();
             }
 
-            uint64_t node_offset = footer.level_0_end;
-            uint64_t entry_index = 0;
+            uint64_t entry_index = std::numeric_limits<uint64_t>::max();
             uint8_t *node_leaf_address = nullptr;
-            find_index(index, node_leaf_address, node_offset, entry_index);
+            find_index(index, node_leaf_address, entry_index);
 
-            return Iterator(storage, entry_index, node_offset, footer.level_0_end);
+            uint64_t global_index = entry_index == std::numeric_limits<uint64_t>::max()
+                                        ? footer.global_end
+                                        : footer.global_start + index;
+
+            return Iterator(node_leaf_address, entry_index, global_index, footer.global_end);
         }
 
         /**
@@ -239,7 +242,7 @@ namespace ninedb::pbt
         {
             ZonePbtReader;
 
-            return Iterator(storage, 0, 0, footer.level_0_end);
+            return Iterator(offset_to_address(0), 0, footer.global_start, footer.global_end);
         }
 
         /**
@@ -250,7 +253,7 @@ namespace ninedb::pbt
         {
             ZonePbtReader;
 
-            return Iterator(storage, 0, footer.level_0_end, footer.level_0_end);
+            return Iterator(nullptr, 0, footer.global_end, footer.global_end);
         }
 
         /**
@@ -318,7 +321,7 @@ namespace ninedb::pbt
             }
         }
 
-        void find_index(uint64_t index, uint8_t *&node_leaf_address, uint64_t &node_offset, uint64_t &entry_index)
+        void find_index(uint64_t index, uint8_t *&node_leaf_address, uint64_t &entry_index)
         {
             ZonePbtReader;
 
@@ -360,12 +363,11 @@ namespace ninedb::pbt
                 return;
             }
 
-            node_offset = offset;
             entry_index = index;
         }
 
         template <ReaderFindMode mode>
-        void find(std::string_view key, uint8_t *&node_leaf_address, uint64_t &node_offset, uint64_t &entry_index)
+        void find(std::string_view key, uint8_t *&node_leaf_address, uint64_t &entry_index, uint64_t *entry_start)
         {
             ZonePbtReader;
 
@@ -396,6 +398,10 @@ namespace ninedb::pbt
                         height--;
                         goto next_level;
                     }
+                    if (mode == GREATER_OR_EQUAL)
+                    {
+                        *entry_start += detail::NodeInternal::read_child_entry_count(node_internal_address, i);
+                    }
                 }
 
                 return;
@@ -412,7 +418,6 @@ namespace ninedb::pbt
                 {
                     if (detail::NodeLeaf::read_key(node_leaf_address, i).compare(key) == 0)
                     {
-                        node_offset = offset;
                         entry_index = i;
                         return;
                     }
@@ -421,7 +426,7 @@ namespace ninedb::pbt
                 {
                     if (detail::NodeLeaf::read_key(node_leaf_address, i).compare(key) >= 0)
                     {
-                        node_offset = offset;
+                        *entry_start += i;
                         entry_index = i;
                         return;
                     }

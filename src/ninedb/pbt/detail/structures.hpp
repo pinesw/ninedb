@@ -428,5 +428,17 @@ namespace ninedb::pbt::detail
 
             return child_offset;
         }
+
+        static uint64_t read_child_size(uint8_t *address, uint16_t i)
+        {
+            ZonePbtStructures;
+
+            address += sizeof(uint16_t) + 2 * sizeof(uint64_t) + 6 * sizeof(uint64_t) * i;
+            uint64_t child_size;
+            address += Format::skip_uint64(5);
+            address += Format::read_uint64(address, child_size);
+
+            return child_size;
+        }
     };
 }
