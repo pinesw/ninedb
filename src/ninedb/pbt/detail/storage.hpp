@@ -46,7 +46,7 @@ namespace ninedb::pbt::detail
         {
             ZonePbtStorage;
 
-            return address;
+            return region->get_address();
         }
 
         /**
@@ -57,6 +57,20 @@ namespace ninedb::pbt::detail
             ZonePbtStorage;
 
             return region->get_size();
+        }
+
+        /**
+         * Ensure that the storage is at least the given size.
+         */
+        void ensure_size(std::size_t size)
+        {
+            ZonePbtStorage;
+
+            if (region->get_size() < size)
+            {
+                uint64_t new_size = std::max<uint64_t>(size, 2 * region->get_size());
+                set_size(new_size);
+            }
         }
 
         /**
@@ -86,7 +100,7 @@ namespace ninedb::pbt::detail
         {
             ZonePbtStorage;
 
-            memset(address, 0, region->get_size());
+            memset(region->get_address(), 0, region->get_size());
         }
 
         /**
@@ -107,7 +121,6 @@ namespace ninedb::pbt::detail
         bool read_only;
         boost::interprocess::file_mapping *mapping = nullptr;
         boost::interprocess::mapped_region *region = nullptr;
-        void *address = nullptr;
 
         void load_mmap()
         {
@@ -117,7 +130,6 @@ namespace ninedb::pbt::detail
                 size_t size = std::filesystem::file_size(path);
                 mapping = new boost::interprocess::file_mapping(path.c_str(), boost::interprocess::read_write);
                 region = new boost::interprocess::mapped_region(*mapping, boost::interprocess::read_write, 0, size);
-                address = region->get_address();
             }
         }
 

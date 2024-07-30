@@ -14,7 +14,7 @@ namespace ninedb::pbt
     struct Iterator
     {
         Iterator(const std::shared_ptr<detail::Storage> &storage, uint64_t index, uint64_t offset, uint64_t end_offset)
-            : storage(storage), current_leaf(nullptr), current_index(index)
+            : storage(storage), current_index(index)
         {
             ZonePbtIterator;
 
@@ -23,8 +23,7 @@ namespace ninedb::pbt
 
             if (offset < end_offset)
             {
-                current_leaf.address = next_address;
-                next_address += current_leaf.size_of();
+                next_address += detail::NodeLeafRead::size_of(current_address);
             }
         }
 
@@ -35,7 +34,7 @@ namespace ninedb::pbt
         {
             ZonePbtIterator;
 
-            return current_leaf.key(current_index);
+            return detail::NodeLeafRead::key(current_address, current_index);
         }
 
         /**
@@ -45,7 +44,7 @@ namespace ninedb::pbt
         {
             ZonePbtIterator;
 
-            return current_leaf.value(current_index);
+            return detail::NodeLeafRead::value(current_address, current_index);
         }
 
         /**
@@ -56,14 +55,13 @@ namespace ninedb::pbt
             ZonePbtIterator;
 
             current_index++;
-            if (current_index >= current_leaf.num_children())
+            if (current_index >= detail::NodeLeafRead::num_children(current_address))
             {
                 current_index = 0;
                 current_address = next_address;
                 if (current_address < end_address)
                 {
-                    current_leaf.address = current_address;
-                    next_address += current_leaf.size_of();
+                    next_address += detail::NodeLeafRead::size_of(current_address);
                 }
             }
         }
@@ -80,7 +78,6 @@ namespace ninedb::pbt
 
     private:
         std::shared_ptr<detail::Storage> storage;
-        detail::NodeLeafRead current_leaf;
         uint64_t current_index;
         uint8_t *current_address;
         uint8_t *next_address;

@@ -221,14 +221,14 @@ namespace ninedb::pbt
                         read_offset += child_size;
                     }
 
-                    append_node_internal(buffer_internal);
+                    write_offset += write_node_internal(write_offset, buffer_internal);
                     buffer_internal.clear();
                 }
             }
 
             footer.root_offset = read_offset;
             footer.root_size = write_offset - read_offset;
-            append_footer(footer);
+            write_offset += write_footer(write_offset, footer);
             storage->set_size(write_offset);
         }
 
@@ -253,46 +253,35 @@ namespace ninedb::pbt
                 return;
             }
 
-            append_node_leaf(buffer_leaf);
+            write_offset += write_node_leaf(write_offset, buffer_leaf);
             buffer_leaf.clear();
         }
 
-        void ensure_space(uint64_t size)
+        uint64_t write_footer(uint64_t offset, const detail::Footer &footer)
         {
             ZonePbtWriter;
 
-            if (storage->get_size() < write_offset + size)
-            {
-                uint64_t new_size = std::max<uint64_t>(write_offset + size, 2 * storage->get_size());
-                storage->set_size(new_size);
-            }
+            storage->ensure_size(offset + detail::Footer::size_of());
+            uint8_t *address = (uint8_t *)storage->get_address() + offset;
+            return footer.write(address);
         }
 
-        void append_footer(const detail::Footer &footer)
+        uint64_t write_node_leaf(uint64_t offset, const detail::NodeLeafWrite &node)
         {
             ZonePbtWriter;
 
-            ensure_space(detail::Footer::size_of());
-            uint8_t *address = (uint8_t *)storage->get_address() + write_offset;
-            write_offset += footer.write(address);
+            uint8_t *address = (uint8_t *)storage->get_address() + offset;
+            storage->ensure_size(offset + node.size_of());
+            return node.write(address);
         }
 
-        void append_node_leaf(const detail::NodeLeafWrite &node)
+        uint64_t write_node_internal(uint64_t offset, const detail::NodeInternalWrite &node)
         {
             ZonePbtWriter;
 
-            uint8_t *address = (uint8_t *)storage->get_address() + write_offset;
-            ensure_space(node.size_of());
-            write_offset += node.write(address);
-        }
-
-        void append_node_internal(const detail::NodeInternalWrite &node)
-        {
-            ZonePbtWriter;
-
-            uint8_t *address = (uint8_t *)storage->get_address() + write_offset;
-            ensure_space(node.size_of());
-            write_offset += node.write(address);
+            uint8_t *address = (uint8_t *)storage->get_address() + offset;
+            storage->ensure_size(offset + node.size_of());
+            return node.write(address);
         }
 
         uint64_t read_node_metadata(uint64_t offset, uint64_t level, uint64_t &entry_count, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
@@ -312,47 +301,45 @@ namespace ninedb::pbt
 
         uint64_t read_node_leaf_metadata(uint8_t *address, uint64_t &entry_count, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
         {
-            detail::NodeLeafRead node(address);
-            entry_count = node.num_children();
+            entry_count = detail::NodeLeafRead::num_children(address);
             values.resize(entry_count);
             for (uint64_t i = 0; i < entry_count; i++)
             {
-                values[i] = node.value(i);
+                values[i] = detail::NodeLeafRead::value(address, i);
             }
             if (first_key != nullptr)
             {
-                *first_key = node.key(0);
+                *first_key = detail::NodeLeafRead::key(address, 0);
             }
             if (last_key != nullptr)
             {
-                *last_key = node.key(entry_count - 1);
+                *last_key = detail::NodeLeafRead::key(address, entry_count - 1);
             }
-            return node.size_of();
+            return detail::NodeLeafRead::size_of(address);
         }
 
         uint64_t read_node_internal_metadata(uint8_t *address, uint64_t &entry_count, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
         {
-            detail::NodeInternalRead node(address);
-            uint64_t num_children = node.num_children();
+            uint64_t num_children = detail::NodeInternalRead::num_children(address);
             entry_count = 0;
             for (uint64_t i = 0; i < num_children; i++)
             {
-                entry_count += node.child_entry_count(i);
+                entry_count += detail::NodeInternalRead::child_entry_count(address, i);
             }
             values.resize(num_children);
             for (uint64_t i = 0; i < num_children; i++)
             {
-                values[i] = node.reduced_value(i);
+                values[i] = detail::NodeInternalRead::reduced_value(address, i);
             }
             if (first_key != nullptr)
             {
-                *first_key = node.left_key();
+                *first_key = detail::NodeInternalRead::left_key(address);
             }
             if (last_key != nullptr)
             {
-                *last_key = node.right_key(num_children - 1);
+                *last_key = detail::NodeInternalRead::right_key(address, num_children - 1);
             }
-            return node.size_of();
+            return detail::NodeInternalRead::size_of(address);
         }
     };
 }

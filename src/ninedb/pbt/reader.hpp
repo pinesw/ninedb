@@ -59,16 +59,16 @@ namespace ninedb::pbt
                 return false;
             }
 
-            uint64_t node_offset = footer.level_0_end;
+            uint64_t node_offset = std::numeric_limits<uint64_t>::max();
             uint64_t entry_index = 0;
-            detail::NodeLeafRead node_leaf(nullptr);
-            find<EXACT>(key, node_leaf, node_offset, entry_index);
+            uint8_t *node_leaf_address = nullptr;
+            find<EXACT>(key, node_leaf_address, node_offset, entry_index);
 
-            if (node_offset >= footer.level_0_end)
+            if (node_offset >= std::numeric_limits<uint64_t>::max())
             {
                 return false;
             }
-            value = node_leaf.value(entry_index);
+            value = detail::NodeLeafRead::value(node_leaf_address, entry_index);
             return true;
         }
 
@@ -101,17 +101,17 @@ namespace ninedb::pbt
                 return false;
             }
 
-            uint64_t node_offset = footer.level_0_end;
+            uint64_t node_offset = std::numeric_limits<uint64_t>::max();
             uint64_t entry_index = 0;
-            detail::NodeLeafRead node_leaf(nullptr);
-            find_index(index, node_leaf, node_offset, entry_index);
+            uint8_t *node_leaf_address = nullptr;
+            find_index(index, node_leaf_address, node_offset, entry_index);
 
-            if (node_offset >= footer.level_0_end)
+            if (node_offset >= std::numeric_limits<uint64_t>::max())
             {
                 return false;
             }
-            key = node_leaf.key(entry_index);
-            value = node_leaf.value(entry_index);
+            key = detail::NodeLeafRead::key(node_leaf_address, entry_index);
+            value = detail::NodeLeafRead::value(node_leaf_address, entry_index);
             return true;
         }
 
@@ -149,8 +149,8 @@ namespace ninedb::pbt
 
             uint64_t node_offset = footer.level_0_end;
             uint64_t entry_index = 0;
-            detail::NodeLeafRead node_leaf(nullptr);
-            find<GREATER_OR_EQUAL>(key, node_leaf, node_offset, entry_index);
+            uint8_t *node_leaf_address = nullptr;
+            find<GREATER_OR_EQUAL>(key, node_leaf_address, node_offset, entry_index);
 
             return Iterator(storage, entry_index, node_offset, footer.level_0_end);
         }
@@ -225,8 +225,8 @@ namespace ninedb::pbt
 
             uint64_t node_offset = footer.level_0_end;
             uint64_t entry_index = 0;
-            detail::NodeLeafRead node_leaf(nullptr);
-            find_index(index, node_leaf, node_offset, entry_index);
+            uint8_t *node_leaf_address = nullptr;
+            find_index(index, node_leaf_address, node_offset, entry_index);
 
             return Iterator(storage, entry_index, node_offset, footer.level_0_end);
         }
@@ -290,53 +290,53 @@ namespace ninedb::pbt
 
             if (height == 1)
             {
-                detail::NodeLeafRead node_leaf(offset_to_address(offset));
+                uint8_t *node_leaf_address = offset_to_address(offset);
 
-                for (uint64_t i = 0; i < node_leaf.num_children(); i++)
+                for (uint64_t i = 0; i < detail::NodeLeafRead::num_children(node_leaf_address); i++)
                 {
-                    if (predicate(node_leaf.value(i)))
+                    if (predicate(detail::NodeLeafRead::value(node_leaf_address, i)))
                     {
-                        accumulator.push_back(node_leaf.value(i));
+                        accumulator.push_back(detail::NodeLeafRead::value(node_leaf_address, i));
                     }
                 }
             }
             else
             {
-                detail::NodeInternalRead node_internal(offset_to_address(offset));
+                uint8_t *node_internal_address = offset_to_address(offset);
 
-                for (uint64_t i = 0; i < node_internal.num_children(); i++)
+                for (uint64_t i = 0; i < detail::NodeInternalRead::num_children(node_internal_address); i++)
                 {
-                    if (predicate(node_internal.reduced_value(i)))
+                    if (predicate(detail::NodeInternalRead::reduced_value(node_internal_address, i)))
                     {
-                        traverse(predicate, accumulator, node_internal.child_offset(i), height - 1);
+                        traverse(predicate, accumulator, detail::NodeInternalRead::child_offset(node_internal_address, i), height - 1);
                     }
                 }
             }
         }
 
-        void find_index(uint64_t index, detail::NodeLeafRead &node_leaf, uint64_t &node_offset, uint64_t &entry_index)
+        void find_index(uint64_t index, uint8_t *&node_leaf_address, uint64_t &node_offset, uint64_t &entry_index)
         {
             ZonePbtReader;
 
             uint64_t offset = footer.root_offset;
             uint64_t height = footer.tree_height;
 
-            detail::NodeInternalRead node_internal(nullptr);
+            uint8_t *node_internal_address = nullptr;
 
             while (height >= 2)
             {
-                node_internal.address = offset_to_address(offset);
+                node_internal_address = offset_to_address(offset);
 
-                for (uint64_t i = 0; i < node_internal.num_children(); i++)
+                for (uint64_t i = 0; i < detail::NodeInternalRead::num_children(node_internal_address); i++)
                 {
-                    if (index < node_internal.child_entry_count(i))
+                    if (index < detail::NodeInternalRead::child_entry_count(node_internal_address, i))
                     {
-                        offset = node_internal.child_offset(i);
+                        offset = detail::NodeInternalRead::child_offset(node_internal_address, i);
                         height--;
                         goto next_level;
                     }
 
-                    index -= node_internal.child_entry_count(i);
+                    index -= detail::NodeInternalRead::child_entry_count(node_internal_address, i);
                 }
 
                 return;
@@ -344,9 +344,9 @@ namespace ninedb::pbt
             next_level:;
             }
 
-            node_leaf.address = offset_to_address(offset);
+            node_leaf_address = offset_to_address(offset);
 
-            if (node_leaf.num_children() <= 0 || index >= node_leaf.num_children())
+            if (detail::NodeLeafRead::num_children(node_leaf_address) <= 0 || index >= detail::NodeLeafRead::num_children(node_leaf_address))
             {
                 return;
             }
@@ -356,32 +356,32 @@ namespace ninedb::pbt
         }
 
         template <ReaderFindMode mode>
-        void find(std::string_view key, detail::NodeLeafRead &node_leaf, uint64_t &node_offset, uint64_t &entry_index)
+        void find(std::string_view key, uint8_t *&node_leaf_address, uint64_t &node_offset, uint64_t &entry_index)
         {
             ZonePbtReader;
 
             uint64_t offset = footer.root_offset;
             uint64_t height = footer.tree_height;
 
-            detail::NodeInternalRead node_internal(nullptr);
+            uint8_t *node_internal_address = nullptr;
 
             while (height >= 2)
             {
-                node_internal.address = offset_to_address(offset);
+                node_internal_address = offset_to_address(offset);
 
                 if (mode == EXACT)
                 {
-                    if (key.compare(node_internal.left_key()) < 0)
+                    if (key.compare(detail::NodeInternalRead::left_key(node_internal_address)) < 0)
                     {
                         return;
                     }
                 }
 
-                for (uint64_t i = 0; i < node_internal.num_children(); i++)
+                for (uint64_t i = 0; i < detail::NodeInternalRead::num_children(node_internal_address); i++)
                 {
-                    if (key.compare(node_internal.right_key(i)) <= 0)
+                    if (key.compare(detail::NodeInternalRead::right_key(node_internal_address, i)) <= 0)
                     {
-                        offset = node_internal.child_offset(i);
+                        offset = detail::NodeInternalRead::child_offset(node_internal_address, i);
                         height--;
                         goto next_level;
                     }
@@ -392,18 +392,18 @@ namespace ninedb::pbt
             next_level:;
             }
 
-            node_leaf.address = offset_to_address(offset);
+            node_leaf_address = offset_to_address(offset);
 
-            if (node_leaf.num_children() <= 0)
+            if (detail::NodeLeafRead::num_children(node_leaf_address) <= 0)
             {
                 return;
             }
 
-            for (uint64_t i = 0; i < node_leaf.num_children(); i++)
+            for (uint64_t i = 0; i < detail::NodeLeafRead::num_children(node_leaf_address); i++)
             {
                 if (mode == EXACT)
                 {
-                    if (node_leaf.key(i).compare(key) == 0)
+                    if (detail::NodeLeafRead::key(node_leaf_address, i).compare(key) == 0)
                     {
                         node_offset = offset;
                         entry_index = i;
@@ -412,7 +412,7 @@ namespace ninedb::pbt
                 }
                 if (mode == GREATER_OR_EQUAL)
                 {
-                    if (node_leaf.key(i).compare(key) >= 0)
+                    if (detail::NodeLeafRead::key(node_leaf_address, i).compare(key) >= 0)
                     {
                         node_offset = offset;
                         entry_index = i;
