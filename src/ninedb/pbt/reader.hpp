@@ -227,8 +227,9 @@ namespace ninedb::pbt
 
             uint64_t entry_index;
             uint8_t *node_leaf_address;
-            
-            if (!find_index(index, node_leaf_address, entry_index)) {
+
+            if (!find_index(index, node_leaf_address, entry_index))
+            {
                 return end();
             }
 
@@ -401,7 +402,7 @@ namespace ninedb::pbt
                         height--;
                         goto next_level;
                     }
-                    if (mode == GREATER_OR_EQUAL)
+                    if (entry_start != nullptr)
                     {
                         *entry_start += detail::NodeInternal::read_child_entry_count(node_internal_address, i);
                     }
@@ -421,6 +422,10 @@ namespace ninedb::pbt
                 {
                     if (detail::NodeLeaf::read_key(node_leaf_address, i).compare(key) == 0)
                     {
+                        if (entry_start != nullptr)
+                        {
+                            *entry_start += i;
+                        }
                         entry_index = i;
                         return true;
                     }
@@ -429,7 +434,10 @@ namespace ninedb::pbt
                 {
                     if (detail::NodeLeaf::read_key(node_leaf_address, i).compare(key) >= 0)
                     {
-                        *entry_start += i;
+                        if (entry_start != nullptr)
+                        {
+                            *entry_start += i;
+                        }
                         entry_index = i;
                         return true;
                     }
