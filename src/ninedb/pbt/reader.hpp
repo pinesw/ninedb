@@ -12,7 +12,6 @@
 #include "../detail/rlru_cache.hpp"
 #include "../detail/profiling.hpp"
 
-#include "./detail/format.hpp"
 #include "./detail/storage.hpp"
 #include "./detail/structures.hpp"
 

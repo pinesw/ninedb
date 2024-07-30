@@ -17,7 +17,6 @@
 #include "../detail/profiling.hpp"
 #include "../detail/traits.hpp"
 
-#include "./detail/format.hpp"
 #include "./detail/storage.hpp"
 #include "./detail/structures.hpp"
 #include "./detail/utils.hpp"
