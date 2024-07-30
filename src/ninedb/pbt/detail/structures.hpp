@@ -46,19 +46,19 @@ namespace ninedb::pbt::detail
             this->magic = MAGIC;
         }
 
-        uint64_t write(uint8_t *address) const
+        static uint64_t write(uint8_t *address, const Footer &footer)
         {
             ZonePbtStructures;
 
-            address += Format::write_uint64(address, this->root_offset);
-            address += Format::write_uint64(address, this->root_size);
-            address += Format::write_uint64(address, this->level_0_end);
-            address += Format::write_uint16(address, this->tree_height);
-            address += Format::write_uint64(address, this->global_start);
-            address += Format::write_uint64(address, this->global_end);
-            address += Format::write_uint16(address, this->version_major);
-            address += Format::write_uint16(address, this->version_minor);
-            address += Format::write_uint32(address, this->magic);
+            address += Format::write_uint64(address, footer.root_offset);
+            address += Format::write_uint64(address, footer.root_size);
+            address += Format::write_uint64(address, footer.level_0_end);
+            address += Format::write_uint16(address, footer.tree_height);
+            address += Format::write_uint64(address, footer.global_start);
+            address += Format::write_uint64(address, footer.global_end);
+            address += Format::write_uint16(address, footer.version_major);
+            address += Format::write_uint16(address, footer.version_minor);
+            address += Format::write_uint32(address, footer.magic);
 
             return Footer::size_of();
         }
@@ -108,7 +108,7 @@ namespace ninedb::pbt::detail
     /**
      * Write-only structure for leaf nodes.
      */
-    struct NodeLeafWrite
+    struct NodeLeafBuilder
     {
         uint16_t num_children;
         std::vector<uint64_t> data_offsets;
@@ -116,7 +116,7 @@ namespace ninedb::pbt::detail
         std::vector<uint64_t> value_sizes;
         std::string data;
 
-        NodeLeafWrite() : num_children(0) {}
+        NodeLeafBuilder() : num_children(0) {}
 
         void add_key_value(const std::string_view &key, const std::string_view &value)
         {
@@ -141,25 +141,6 @@ namespace ninedb::pbt::detail
             data.clear();
         }
 
-        uint64_t write(uint8_t *address) const
-        {
-            ZonePbtStructures;
-
-            uint8_t *base_address = address;
-            uint64_t header_size = sizeof(uint16_t) + 3 * sizeof(uint64_t) * this->num_children;
-
-            address += Format::write_uint16(address, this->num_children);
-            for (uint64_t i = 0; i < this->num_children; i++)
-            {
-                address += Format::write_uint64(address, this->data_offsets[i] + header_size);
-                address += Format::write_uint64(address, this->key_sizes[i]);
-                address += Format::write_uint64(address, this->value_sizes[i]);
-            }
-            address += Format::write_string_data_only(address, this->data);
-
-            return address - base_address;
-        }
-
         uint64_t size_of() const
         {
             ZonePbtStructures;
@@ -175,8 +156,27 @@ namespace ninedb::pbt::detail
     /**
      * Read-only structure for leaf nodes.
      */
-    struct NodeLeafRead
+    struct NodeLeaf
     {
+        static uint64_t write(uint8_t *address, const NodeLeafBuilder &node)
+        {
+            ZonePbtStructures;
+
+            uint8_t *base_address = address;
+            uint64_t header_size = sizeof(uint16_t) + 3 * sizeof(uint64_t) * node.num_children;
+
+            address += Format::write_uint16(address, node.num_children);
+            for (uint64_t i = 0; i < node.num_children; i++)
+            {
+                address += Format::write_uint64(address, node.data_offsets[i] + header_size);
+                address += Format::write_uint64(address, node.key_sizes[i]);
+                address += Format::write_uint64(address, node.value_sizes[i]);
+            }
+            address += Format::write_string_data_only(address, node.data);
+
+            return address - base_address;
+        }
+
         static uint64_t size_of(uint8_t *address)
         {
             ZonePbtStructures;
@@ -238,7 +238,7 @@ namespace ninedb::pbt::detail
     /**
      * Write-only structure for internal nodes.
      */
-    struct NodeInternalWrite
+    struct NodeInternalBuilder
     {
         uint16_t num_children;
         std::vector<uint64_t> data_offsets;
@@ -249,7 +249,7 @@ namespace ninedb::pbt::detail
         std::vector<uint64_t> child_sizes;
         std::string data;
 
-        NodeInternalWrite() : num_children(0) {}
+        NodeInternalBuilder() : num_children(0) {}
 
         void add_first_child(const std::string_view &left_key, const std::string_view &right_key, const std::string_view &reduced_value, uint64_t child_entry_count, uint64_t child_offset, uint64_t child_size)
         {
@@ -290,32 +290,6 @@ namespace ninedb::pbt::detail
             data.clear();
         }
 
-        uint64_t write(uint8_t *address) const
-        {
-            ZonePbtStructures;
-
-            uint8_t *base_address = address;
-            uint64_t header_size = sizeof(uint16_t) + 2 * sizeof(uint64_t) + 6 * sizeof(uint64_t) * this->num_children;
-
-            address += Format::write_uint16(address, this->num_children);
-
-            address += Format::write_uint64(address, this->data_offsets[0] + header_size);
-            address += Format::write_uint64(address, this->key_sizes[0]);
-            for (uint64_t i = 0; i < this->num_children; i++)
-            {
-                address += Format::write_uint64(address, this->data_offsets[i + 1] + header_size);
-                address += Format::write_uint64(address, this->key_sizes[i + 1]);
-                address += Format::write_uint64(address, this->reduced_value_sizes[i]);
-                address += Format::write_uint64(address, this->child_entry_counts[i]);
-                address += Format::write_uint64(address, this->child_offsets[i]);
-                address += Format::write_uint64(address, this->child_sizes[i]);
-            }
-
-            address += Format::write_string_data_only(address, this->data);
-
-            return address - base_address;
-        }
-
         uint64_t size_of() const
         {
             ZonePbtStructures;
@@ -332,8 +306,34 @@ namespace ninedb::pbt::detail
     /**
      * Read-only structure for internal nodes.
      */
-    struct NodeInternalRead
+    struct NodeInternal
     {
+        static uint64_t write(uint8_t *address, const NodeInternalBuilder &node)
+        {
+            ZonePbtStructures;
+
+            uint8_t *base_address = address;
+            uint64_t header_size = sizeof(uint16_t) + 2 * sizeof(uint64_t) + 6 * sizeof(uint64_t) * node.num_children;
+
+            address += Format::write_uint16(address, node.num_children);
+
+            address += Format::write_uint64(address, node.data_offsets[0] + header_size);
+            address += Format::write_uint64(address, node.key_sizes[0]);
+            for (uint64_t i = 0; i < node.num_children; i++)
+            {
+                address += Format::write_uint64(address, node.data_offsets[i + 1] + header_size);
+                address += Format::write_uint64(address, node.key_sizes[i + 1]);
+                address += Format::write_uint64(address, node.reduced_value_sizes[i]);
+                address += Format::write_uint64(address, node.child_entry_counts[i]);
+                address += Format::write_uint64(address, node.child_offsets[i]);
+                address += Format::write_uint64(address, node.child_sizes[i]);
+            }
+
+            address += Format::write_string_data_only(address, node.data);
+
+            return address - base_address;
+        }
+
         static uint64_t size_of(uint8_t *address)
         {
             ZonePbtStructures;

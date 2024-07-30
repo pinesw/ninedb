@@ -23,8 +23,8 @@ namespace ninedb::pbt
 
             if (offset < end_offset)
             {
-                next_address += detail::NodeLeafRead::size_of(current_address);
-                current_num_children = detail::NodeLeafRead::read_num_children(current_address);
+                next_address += detail::NodeLeaf::size_of(current_address);
+                current_num_children = detail::NodeLeaf::read_num_children(current_address);
             }
         }
 
@@ -35,7 +35,7 @@ namespace ninedb::pbt
         {
             ZonePbtIterator;
 
-            return detail::NodeLeafRead::read_key(current_address, current_index);
+            return detail::NodeLeaf::read_key(current_address, current_index);
         }
 
         /**
@@ -45,7 +45,7 @@ namespace ninedb::pbt
         {
             ZonePbtIterator;
 
-            return detail::NodeLeafRead::read_value(current_address, current_index);
+            return detail::NodeLeaf::read_value(current_address, current_index);
         }
 
         /**
@@ -62,7 +62,7 @@ namespace ninedb::pbt
                 current_address = next_address;
                 if (current_address < end_address)
                 {
-                    next_address += detail::NodeLeafRead::size_of(current_address);
+                    next_address += detail::NodeLeaf::size_of(current_address);
                 }
             }
         }

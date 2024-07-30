@@ -68,7 +68,7 @@ namespace ninedb::pbt
             {
                 return false;
             }
-            value = detail::NodeLeafRead::read_value(node_leaf_address, entry_index);
+            value = detail::NodeLeaf::read_value(node_leaf_address, entry_index);
             return true;
         }
 
@@ -110,8 +110,8 @@ namespace ninedb::pbt
             {
                 return false;
             }
-            key = detail::NodeLeafRead::read_key(node_leaf_address, entry_index);
-            value = detail::NodeLeafRead::read_value(node_leaf_address, entry_index);
+            key = detail::NodeLeaf::read_key(node_leaf_address, entry_index);
+            value = detail::NodeLeaf::read_value(node_leaf_address, entry_index);
             return true;
         }
 
@@ -291,24 +291,24 @@ namespace ninedb::pbt
             if (height >= 2)
             {
                 uint8_t *node_internal_address = offset_to_address(offset);
-                uint64_t num_children = detail::NodeInternalRead::read_num_children(node_internal_address);
+                uint64_t num_children = detail::NodeInternal::read_num_children(node_internal_address);
 
                 for (uint64_t i = 0; i < num_children; i++)
                 {
-                    if (predicate(detail::NodeInternalRead::read_reduced_value(node_internal_address, i)))
+                    if (predicate(detail::NodeInternal::read_reduced_value(node_internal_address, i)))
                     {
-                        traverse(predicate, accumulator, detail::NodeInternalRead::read_child_offset(node_internal_address, i), height - 1);
+                        traverse(predicate, accumulator, detail::NodeInternal::read_child_offset(node_internal_address, i), height - 1);
                     }
                 }
             }
             else
             {
                 uint8_t *node_leaf_address = offset_to_address(offset);
-                uint64_t num_children = detail::NodeLeafRead::read_num_children(node_leaf_address);
+                uint64_t num_children = detail::NodeLeaf::read_num_children(node_leaf_address);
 
                 for (uint64_t i = 0; i < num_children; i++)
                 {
-                    std::string_view value = detail::NodeLeafRead::read_value(node_leaf_address, i);
+                    std::string_view value = detail::NodeLeaf::read_value(node_leaf_address, i);
 
                     if (predicate(value))
                     {
@@ -331,15 +331,15 @@ namespace ninedb::pbt
             {
                 node_internal_address = offset_to_address(offset);
 
-                uint64_t num_children = detail::NodeInternalRead::read_num_children(node_internal_address);
+                uint64_t num_children = detail::NodeInternal::read_num_children(node_internal_address);
 
                 for (uint64_t i = 0; i < num_children; i++)
                 {
-                    uint64_t child_entry_count = detail::NodeInternalRead::read_child_entry_count(node_internal_address, i);
+                    uint64_t child_entry_count = detail::NodeInternal::read_child_entry_count(node_internal_address, i);
 
                     if (index < child_entry_count)
                     {
-                        offset = detail::NodeInternalRead::read_child_offset(node_internal_address, i);
+                        offset = detail::NodeInternal::read_child_offset(node_internal_address, i);
                         height--;
                         goto next_level;
                     }
@@ -353,7 +353,7 @@ namespace ninedb::pbt
             }
 
             node_leaf_address = offset_to_address(offset);
-            uint64_t num_children = detail::NodeLeafRead::read_num_children(node_leaf_address);
+            uint64_t num_children = detail::NodeLeaf::read_num_children(node_leaf_address);
 
             if (num_children <= 0 || index >= num_children)
             {
@@ -380,19 +380,19 @@ namespace ninedb::pbt
 
                 if (mode == EXACT)
                 {
-                    if (key.compare(detail::NodeInternalRead::read_left_key(node_internal_address)) < 0)
+                    if (key.compare(detail::NodeInternal::read_left_key(node_internal_address)) < 0)
                     {
                         return;
                     }
                 }
 
-                uint64_t num_children = detail::NodeInternalRead::read_num_children(node_internal_address);
+                uint64_t num_children = detail::NodeInternal::read_num_children(node_internal_address);
 
                 for (uint64_t i = 0; i < num_children; i++)
                 {
-                    if (key.compare(detail::NodeInternalRead::read_right_key(node_internal_address, i)) <= 0)
+                    if (key.compare(detail::NodeInternal::read_right_key(node_internal_address, i)) <= 0)
                     {
-                        offset = detail::NodeInternalRead::read_child_offset(node_internal_address, i);
+                        offset = detail::NodeInternal::read_child_offset(node_internal_address, i);
                         height--;
                         goto next_level;
                     }
@@ -404,13 +404,13 @@ namespace ninedb::pbt
             }
 
             node_leaf_address = offset_to_address(offset);
-            uint64_t num_children = detail::NodeLeafRead::read_num_children(node_leaf_address);
+            uint64_t num_children = detail::NodeLeaf::read_num_children(node_leaf_address);
 
             for (uint64_t i = 0; i < num_children; i++)
             {
                 if (mode == EXACT)
                 {
-                    if (detail::NodeLeafRead::read_key(node_leaf_address, i).compare(key) == 0)
+                    if (detail::NodeLeaf::read_key(node_leaf_address, i).compare(key) == 0)
                     {
                         node_offset = offset;
                         entry_index = i;
@@ -419,7 +419,7 @@ namespace ninedb::pbt
                 }
                 if (mode == GREATER_OR_EQUAL)
                 {
-                    if (detail::NodeLeafRead::read_key(node_leaf_address, i).compare(key) >= 0)
+                    if (detail::NodeLeaf::read_key(node_leaf_address, i).compare(key) >= 0)
                     {
                         node_offset = offset;
                         entry_index = i;
