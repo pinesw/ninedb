@@ -168,7 +168,6 @@ namespace ninedb::pbt
             }
 
             detail::Footer footer = detail::Footer();
-            footer.level_0_end = write_offset;
             footer.tree_height = entry_counts.size();
             footer.global_start = global_start;
             footer.global_end = global_start + num_entries;

@@ -18,12 +18,11 @@ namespace ninedb::pbt::detail
     {
         static const uint32_t MAGIC = 0x1EAF1111;
 
-        // Root node offset.
+        // Root node handle.
         uint64_t root_offset;
         uint64_t root_size;
 
         // Tree structure values.
-        uint64_t level_0_end; // TODO: remove me. Reader can go `tree_height` nodes to the right to find the last leaf.
         uint16_t tree_height;
 
         // Metadata values.
@@ -52,7 +51,6 @@ namespace ninedb::pbt::detail
 
             address += Format::write_uint64(address, footer.root_offset);
             address += Format::write_uint64(address, footer.root_size);
-            address += Format::write_uint64(address, footer.level_0_end);
             address += Format::write_uint16(address, footer.tree_height);
             address += Format::write_uint64(address, footer.global_start);
             address += Format::write_uint64(address, footer.global_end);
@@ -69,7 +67,6 @@ namespace ninedb::pbt::detail
 
             address += Format::read_uint64(address, footer.root_offset);
             address += Format::read_uint64(address, footer.root_size);
-            address += Format::read_uint64(address, footer.level_0_end);
             address += Format::read_uint16(address, footer.tree_height);
             address += Format::read_uint64(address, footer.global_start);
             address += Format::read_uint64(address, footer.global_end);
