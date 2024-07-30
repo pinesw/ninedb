@@ -24,6 +24,9 @@ namespace ninedb::pbt::detail
 
         // Tree structure values.
         uint16_t tree_height;
+        // uint8_t enable_lz4_compression; // TODO: implement
+        // uint8_t enable_varint_compression; // TODO: implement
+        // uint8_t enable_prefix_compression; // TODO: implement
 
         // Metadata values.
         uint64_t global_start;
