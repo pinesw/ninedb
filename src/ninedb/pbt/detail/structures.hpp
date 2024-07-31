@@ -24,7 +24,7 @@ namespace ninedb::pbt::detail
 
         // Tree structure values.
         uint16_t tree_height;
-        // uint8_t enable_lz4_compression; // TODO: implement
+        uint8_t enable_lz4_compression;
         // uint8_t enable_varint_compression; // TODO: implement
         // uint8_t enable_prefix_compression; // TODO: implement
 
@@ -55,13 +55,14 @@ namespace ninedb::pbt::detail
             address += Format::write_uint64(address, footer.root_offset);
             address += Format::write_uint64(address, footer.root_size);
             address += Format::write_uint16(address, footer.tree_height);
+            address += Format::write_uint8(address, footer.enable_lz4_compression);
             address += Format::write_uint64(address, footer.global_start);
             address += Format::write_uint64(address, footer.global_end);
             address += Format::write_uint16(address, footer.version_major);
             address += Format::write_uint16(address, footer.version_minor);
             address += Format::write_uint32(address, footer.magic);
 
-            return Footer::size_of();
+            return Footer::size();
         }
 
         static uint64_t read(uint8_t *address, Footer &footer)
@@ -71,16 +72,17 @@ namespace ninedb::pbt::detail
             address += Format::read_uint64(address, footer.root_offset);
             address += Format::read_uint64(address, footer.root_size);
             address += Format::read_uint16(address, footer.tree_height);
+            address += Format::read_uint8(address, footer.enable_lz4_compression);
             address += Format::read_uint64(address, footer.global_start);
             address += Format::read_uint64(address, footer.global_end);
             address += Format::read_uint16(address, footer.version_major);
             address += Format::read_uint16(address, footer.version_minor);
             address += Format::read_uint32(address, footer.magic);
 
-            return Footer::size_of();
+            return Footer::size();
         }
 
-        static constexpr uint64_t size_of()
+        static constexpr uint64_t size()
         {
             return sizeof(Footer);
         }
@@ -141,7 +143,7 @@ namespace ninedb::pbt::detail
             data.clear();
         }
 
-        uint64_t size_of() const
+        uint64_t size() const
         {
             ZonePbtStructures;
 
@@ -177,7 +179,7 @@ namespace ninedb::pbt::detail
             return address - base_address;
         }
 
-        static uint64_t size_of(uint8_t *address)
+        static uint64_t size(uint8_t *address)
         {
             ZonePbtStructures;
 
@@ -290,7 +292,7 @@ namespace ninedb::pbt::detail
             data.clear();
         }
 
-        uint64_t size_of() const
+        uint64_t size() const
         {
             ZonePbtStructures;
 
@@ -334,7 +336,7 @@ namespace ninedb::pbt::detail
             return address - base_address;
         }
 
-        static uint64_t size_of(uint8_t *address)
+        static uint64_t size(uint8_t *address)
         {
             ZonePbtStructures;
 
@@ -411,7 +413,7 @@ namespace ninedb::pbt::detail
 
             address += sizeof(uint16_t) + 2 * sizeof(uint64_t) + 6 * sizeof(uint64_t) * i;
             uint64_t child_entry_count;
-            address += Format::skip_uint64(3);
+            address += Format::size_uint64(3);
             address += Format::read_uint64(address, child_entry_count);
 
             return child_entry_count;
@@ -423,7 +425,7 @@ namespace ninedb::pbt::detail
 
             address += sizeof(uint16_t) + 2 * sizeof(uint64_t) + 6 * sizeof(uint64_t) * i;
             uint64_t child_offset;
-            address += Format::skip_uint64(4);
+            address += Format::size_uint64(4);
             address += Format::read_uint64(address, child_offset);
 
             return child_offset;
@@ -435,10 +437,56 @@ namespace ninedb::pbt::detail
 
             address += sizeof(uint16_t) + 2 * sizeof(uint64_t) + 6 * sizeof(uint64_t) * i;
             uint64_t child_size;
-            address += Format::skip_uint64(5);
+            address += Format::size_uint64(5);
             address += Format::read_uint64(address, child_size);
 
             return child_size;
+        }
+    };
+
+    struct FrameViewLeaf
+    {
+        FrameView frame_view;
+
+        FrameViewLeaf() {}
+
+        FrameViewLeaf(uint8_t *address, bool compression_enabled)
+        {
+            ZonePbtStructures;
+
+            if (compression_enabled)
+            {
+                uint64_t frame_size = Format::compressed_frame_size(address);
+                frame_view = FrameView(address, frame_size, true);
+            }
+            else
+            {
+                uint64_t node_size = NodeLeaf::size(address);
+                frame_view = FrameView(address, node_size, false);
+            }
+        }
+    };
+
+    struct FrameViewInternal
+    {
+        FrameView frame_view;
+
+        FrameViewInternal() {}
+
+        FrameViewInternal(uint8_t *address, bool compression_enabled)
+        {
+            ZonePbtStructures;
+
+            if (compression_enabled)
+            {
+                uint64_t frame_size = Format::compressed_frame_size(address);
+                frame_view = FrameView(address, frame_size, true);
+            }
+            else
+            {
+                uint64_t node_size = NodeInternal::size(address);
+                frame_view = FrameView(address, node_size, false);
+            }
         }
     };
 }

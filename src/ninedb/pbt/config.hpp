@@ -19,11 +19,11 @@ namespace ninedb::pbt
          */
         uint64_t initial_pbt_size = 1 << 23;
 
-        // /**
-        //  * Whether or not to use LZ4 compression.
-        //  * Reduces the size of the PBT file, at a slight cost to read/write performance.
-        //  */
-        // bool enable_compression = false;
+        /**
+         * Whether or not to use LZ4 compression.
+         * Reduces the size of the PBT file, at a slight cost to read/write performance.
+         */
+        bool enable_lz4_compression = false;
 
         // /**
         //  * Whether or not to use prefix encoding.

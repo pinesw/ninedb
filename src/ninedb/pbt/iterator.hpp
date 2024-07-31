@@ -11,14 +11,18 @@ namespace ninedb::pbt
 {
     struct Iterator
     {
-        Iterator(uint8_t *node_address, uint64_t entry_index, uint64_t remaining_entries)
-            : node_address(node_address), entry_index(entry_index), remaining_entries(remaining_entries)
+        // TODO: take FrameViewLeaf as a parameter instead of node_address
+
+        Iterator(uint8_t *node_address, bool compression_enabled, uint64_t entry_index, uint64_t remaining_entries)
+            : compression_enabled(compression_enabled), entry_index(entry_index), remaining_entries(remaining_entries)
         {
             ZonePbtIterator;
 
+            leaf = detail::FrameViewLeaf(node_address, compression_enabled);
+
             if (remaining_entries >= 1)
             {
-                current_num_children = detail::NodeLeaf::read_num_children(node_address);
+                current_num_children = detail::NodeLeaf::read_num_children((uint8_t *)leaf.frame_view.get_view().data());
             }
         }
 
@@ -29,7 +33,7 @@ namespace ninedb::pbt
         {
             ZonePbtIterator;
 
-            return detail::NodeLeaf::read_key(node_address, entry_index);
+            return detail::NodeLeaf::read_key((uint8_t *)leaf.frame_view.get_view().data(), entry_index);
         }
 
         /**
@@ -39,7 +43,7 @@ namespace ninedb::pbt
         {
             ZonePbtIterator;
 
-            return detail::NodeLeaf::read_value(node_address, entry_index);
+            return detail::NodeLeaf::read_value((uint8_t *)leaf.frame_view.get_view().data(), entry_index);
         }
 
         /**
@@ -56,8 +60,8 @@ namespace ninedb::pbt
                 entry_index = 0;
                 if (remaining_entries >= 1)
                 {
-                    node_address += detail::NodeLeaf::size_of(node_address);
-                    current_num_children = detail::NodeLeaf::read_num_children(node_address);
+                    leaf = detail::FrameViewLeaf((uint8_t *)leaf.frame_view.original.data() + leaf.frame_view.original.size(), compression_enabled);
+                    current_num_children = detail::NodeLeaf::read_num_children((uint8_t *)leaf.frame_view.get_view().data());
                 }
             }
         }
@@ -73,7 +77,8 @@ namespace ninedb::pbt
         }
 
     private:
-        uint8_t *node_address;
+        bool compression_enabled;
+        detail::FrameViewLeaf leaf;
         uint64_t entry_index;
         uint64_t remaining_entries;
         uint64_t current_num_children;

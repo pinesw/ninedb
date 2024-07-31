@@ -266,6 +266,7 @@ namespace ninedb
             pbt::WriterConfig writer_config;
             writer_config.max_node_children = config.writer.max_node_children;
             writer_config.initial_pbt_size = config.writer.initial_pbt_size;
+            writer_config.enable_lz4_compression = config.writer.enable_lz4_compression;
             writer_config.reduce = config.writer.reduce;
             writer_config.error_if_exists = false;
             return writer_config;

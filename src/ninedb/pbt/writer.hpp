@@ -168,6 +168,7 @@ namespace ninedb::pbt
 
             detail::Footer footer = detail::Footer();
             footer.tree_height = entry_counts.size();
+            footer.enable_lz4_compression = config.enable_lz4_compression;
             footer.global_start = global_start;
             footer.global_end = global_start + num_entries;
 
@@ -179,7 +180,7 @@ namespace ninedb::pbt
             reduced_values.resize(config.max_node_children);
             uint64_t read_offset = 0;
 
-            for (size_t i = 1; i < footer.tree_height; i++)
+            for (uint64_t i = 1; i < footer.tree_height; i++)
             {
                 uint64_t num_level_entries = entry_counts[i];
 
@@ -259,34 +260,63 @@ namespace ninedb::pbt
         {
             ZonePbtWriter;
 
-            storage->ensure_size(offset + detail::Footer::size_of());
-            uint8_t *address = (uint8_t *)storage->get_address() + offset;
-            return detail::Footer::write(address, footer);
+            storage->ensure_size(offset + detail::Footer::size());
+            return detail::Footer::write(offset_to_address(offset), footer);
         }
 
         uint64_t write_node_leaf(uint64_t offset, const detail::NodeLeafBuilder &node)
         {
             ZonePbtWriter;
 
-            uint8_t *address = (uint8_t *)storage->get_address() + offset;
-            storage->ensure_size(offset + node.size_of());
-            return detail::NodeLeaf::write(address, node);
+            if (config.enable_lz4_compression)
+            {
+                std::string buffer_uncompressed = std::string(node.size(), 0); // TODO: put this in a buffer pool / struct member
+                detail::NodeLeaf::write((uint8_t *)buffer_uncompressed.data(), node);
+
+                uint64_t size_compressed_bound = detail::Format::compressed_frame_bound(buffer_uncompressed.size());
+                std::string buffer_compressed = std::string(size_compressed_bound, 0);
+                uint64_t size_compressed = detail::Format::write_data_compressed((uint8_t *)buffer_compressed.data(), buffer_uncompressed);
+
+                storage->ensure_size(offset + size_compressed);
+                memcpy(offset_to_address(offset), buffer_compressed.data(), size_compressed);
+                return size_compressed;
+            }
+            else
+            {
+                storage->ensure_size(offset + node.size());
+                return detail::NodeLeaf::write(offset_to_address(offset), node);
+            }
         }
 
         uint64_t write_node_internal(uint64_t offset, const detail::NodeInternalBuilder &node)
         {
             ZonePbtWriter;
 
-            uint8_t *address = (uint8_t *)storage->get_address() + offset;
-            storage->ensure_size(offset + node.size_of());
-            return detail::NodeInternal::write(address, node);
+            if (config.enable_lz4_compression)
+            {
+                std::string buffer_uncompressed = std::string(node.size(), 0); // TODO: put this in a buffer pool / struct member
+                detail::NodeInternal::write((uint8_t *)buffer_uncompressed.data(), node);
+
+                uint64_t size_compressed_bound = detail::Format::compressed_frame_bound(buffer_uncompressed.size());
+                std::string buffer_compressed = std::string(size_compressed_bound, 0);
+                uint64_t size_compressed = detail::Format::write_data_compressed((uint8_t *)buffer_compressed.data(), buffer_uncompressed);
+
+                storage->ensure_size(offset + size_compressed);
+                memcpy(offset_to_address(offset), buffer_compressed.data(), size_compressed);
+                return size_compressed;
+            }
+            else
+            {
+                storage->ensure_size(offset + node.size());
+                return detail::NodeInternal::write(offset_to_address(offset), node);
+            }
         }
 
         uint64_t read_node_metadata(uint64_t offset, uint64_t level, uint64_t &entry_count, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
         {
             ZonePbtWriter;
 
-            uint8_t *address = (uint8_t *)storage->get_address() + offset;
+            uint8_t *address = offset_to_address(offset);
             if (level <= 1)
             {
                 return read_node_leaf_metadata(address, entry_count, values, first_key, last_key);
@@ -298,6 +328,23 @@ namespace ninedb::pbt
         }
 
         uint64_t read_node_leaf_metadata(uint8_t *address, uint64_t &entry_count, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
+        {
+            // TODO: string_views are not valid after the buffer is destroyed in the scope of this function. Same for internal.
+
+            if (config.enable_lz4_compression)
+            {
+                std::string buffer;
+                uint64_t size = detail::Format::read_data_compressed(address, buffer);
+                read_node_leaf_metadata_uncompressed((uint8_t *)buffer.data(), entry_count, values, first_key, last_key);
+                return size;
+            }
+            else
+            {
+                return read_node_leaf_metadata_uncompressed(address, entry_count, values, first_key, last_key);
+            }
+        }
+
+        uint64_t read_node_leaf_metadata_uncompressed(uint8_t *address, uint64_t &entry_count, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
         {
             entry_count = detail::NodeLeaf::read_num_children(address);
             values.resize(entry_count);
@@ -313,10 +360,25 @@ namespace ninedb::pbt
             {
                 *last_key = detail::NodeLeaf::read_key(address, entry_count - 1);
             }
-            return detail::NodeLeaf::size_of(address);
+            return detail::NodeLeaf::size(address);
         }
 
         uint64_t read_node_internal_metadata(uint8_t *address, uint64_t &entry_count, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
+        {
+            if (config.enable_lz4_compression)
+            {
+                std::string buffer;
+                uint64_t size = detail::Format::read_data_compressed(address, buffer);
+                read_node_internal_metadata_uncompressed((uint8_t *)buffer.data(), entry_count, values, first_key, last_key);
+                return size;
+            }
+            else
+            {
+                return read_node_internal_metadata_uncompressed(address, entry_count, values, first_key, last_key);
+            }
+        }
+
+        uint64_t read_node_internal_metadata_uncompressed(uint8_t *address, uint64_t &entry_count, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
         {
             uint64_t num_children = detail::NodeInternal::read_num_children(address);
             entry_count = 0;
@@ -337,7 +399,14 @@ namespace ninedb::pbt
             {
                 *last_key = detail::NodeInternal::read_right_key(address, num_children - 1);
             }
-            return detail::NodeInternal::size_of(address);
+            return detail::NodeInternal::size(address);
+        }
+
+        uint8_t *offset_to_address(uint64_t offset) const
+        {
+            ZonePbtReader;
+
+            return (uint8_t *)storage->get_address() + offset;
         }
     };
 }

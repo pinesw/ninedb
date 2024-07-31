@@ -13,9 +13,10 @@ using namespace ninedb;
 Config get_test_config(bool delete_if_exists = true)
 {
     Config config;
-    config.delete_if_exists = delete_if_exists;
     config.max_buffer_size = 1 << 16;
     config.max_level_count = 2;
+    config.writer.enable_lz4_compression = true;
+    config.delete_if_exists = delete_if_exists;
     return config;
 }
 

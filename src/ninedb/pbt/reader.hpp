@@ -59,13 +59,14 @@ namespace ninedb::pbt
             }
 
             uint64_t entry_index;
-            uint8_t *node_leaf_address;
+            detail::FrameViewLeaf leaf;
 
-            if (!find<EXACT>(key, node_leaf_address, entry_index, nullptr))
+            if (!find<EXACT>(key, leaf, entry_index, nullptr))
             {
                 return false;
             }
 
+            uint8_t *node_leaf_address = (uint8_t *)leaf.frame_view.get_view().data();
             value = detail::NodeLeaf::read_value(node_leaf_address, entry_index);
             return true;
         }
@@ -100,13 +101,14 @@ namespace ninedb::pbt
             }
 
             uint64_t entry_index;
-            uint8_t *node_leaf_address;
+            detail::FrameViewLeaf leaf;
 
-            if (!find_index(index, node_leaf_address, entry_index))
+            if (!find_index(index, leaf, entry_index))
             {
                 return false;
             }
 
+            uint8_t *node_leaf_address = (uint8_t *)leaf.frame_view.get_view().data();
             key = detail::NodeLeaf::read_key(node_leaf_address, entry_index);
             value = detail::NodeLeaf::read_value(node_leaf_address, entry_index);
             return true;
@@ -146,14 +148,15 @@ namespace ninedb::pbt
 
             uint64_t entry_index;
             uint64_t entry_start = 0;
-            uint8_t *node_leaf_address;
+            detail::FrameViewLeaf leaf;
 
-            if (!find<GREATER_OR_EQUAL>(key, node_leaf_address, entry_index, &entry_start))
+            if (!find<GREATER_OR_EQUAL>(key, leaf, entry_index, &entry_start))
             {
                 return end();
             }
 
-            return Iterator(node_leaf_address, entry_index, footer.global_end - footer.global_start - entry_start);
+            uint8_t *node_leaf_address = (uint8_t *)leaf.frame_view.get_view().data();
+            return Iterator(node_leaf_address, footer.enable_lz4_compression, entry_index, footer.global_end - footer.global_start - entry_start);
         }
 
         /**
@@ -225,14 +228,15 @@ namespace ninedb::pbt
             }
 
             uint64_t entry_index;
-            uint8_t *node_leaf_address;
+            detail::FrameViewLeaf leaf;
 
-            if (!find_index(index, node_leaf_address, entry_index))
+            if (!find_index(index, leaf, entry_index))
             {
                 return end();
             }
 
-            return Iterator(node_leaf_address, entry_index, footer.global_end - footer.global_start - index);
+            uint8_t *node_leaf_address = (uint8_t *)leaf.frame_view.get_view().data();
+            return Iterator(node_leaf_address, footer.enable_lz4_compression, entry_index, footer.global_end - footer.global_start - index);
         }
 
         /**
@@ -243,7 +247,7 @@ namespace ninedb::pbt
         {
             ZonePbtReader;
 
-            return Iterator(offset_to_address(0), 0, footer.global_end - footer.global_start);
+            return Iterator(offset_to_address(0), footer.enable_lz4_compression, 0, footer.global_end - footer.global_start);
         }
 
         /**
@@ -254,7 +258,7 @@ namespace ninedb::pbt
         {
             ZonePbtReader;
 
-            return Iterator(nullptr, 0, 0);
+            return Iterator(nullptr, footer.enable_lz4_compression, 0, 0);
         }
 
         /**
@@ -294,7 +298,9 @@ namespace ninedb::pbt
 
             if (height >= 2)
             {
-                uint8_t *node_internal_address = offset_to_address(offset);
+                detail::FrameViewInternal internal(offset_to_address(offset), footer.enable_lz4_compression);
+                uint8_t *node_internal_address = (uint8_t *)internal.frame_view.get_view().data();
+
                 uint64_t num_children = detail::NodeInternal::read_num_children(node_internal_address);
 
                 for (uint64_t i = 0; i < num_children; i++)
@@ -322,18 +328,20 @@ namespace ninedb::pbt
             }
         }
 
-        bool find_index(uint64_t index, uint8_t *&node_leaf_address, uint64_t &entry_index)
+        bool find_index(uint64_t index, detail::FrameViewLeaf &leaf, uint64_t &entry_index)
         {
             ZonePbtReader;
 
             uint64_t offset = footer.root_offset;
             uint64_t height = footer.tree_height;
 
-            uint8_t *node_internal_address = nullptr;
+            detail::FrameViewInternal internal;
+            uint8_t *node_internal_address;
 
             while (height >= 2)
             {
-                node_internal_address = offset_to_address(offset);
+                internal = detail::FrameViewInternal(offset_to_address(offset), footer.enable_lz4_compression);
+                node_internal_address = (uint8_t *)internal.frame_view.get_view().data();
 
                 uint64_t num_children = detail::NodeInternal::read_num_children(node_internal_address);
 
@@ -356,7 +364,8 @@ namespace ninedb::pbt
             next_level:;
             }
 
-            node_leaf_address = offset_to_address(offset);
+            leaf = detail::FrameViewLeaf(offset_to_address(offset), footer.enable_lz4_compression);
+            uint8_t *node_leaf_address = (uint8_t *)leaf.frame_view.get_view().data();
             uint64_t num_children = detail::NodeLeaf::read_num_children(node_leaf_address);
 
             if (num_children <= 0 || index >= num_children)
@@ -370,18 +379,20 @@ namespace ninedb::pbt
         }
 
         template <ReaderFindMode mode>
-        bool find(std::string_view key, uint8_t *&node_leaf_address, uint64_t &entry_index, uint64_t *entry_start)
+        bool find(std::string_view key, detail::FrameViewLeaf &leaf, uint64_t &entry_index, uint64_t *entry_start)
         {
             ZonePbtReader;
 
             uint64_t offset = footer.root_offset;
             uint64_t height = footer.tree_height;
 
-            uint8_t *node_internal_address = nullptr;
+            detail::FrameViewInternal internal;
+            uint8_t *node_internal_address;
 
             while (height >= 2)
             {
-                node_internal_address = offset_to_address(offset);
+                internal = detail::FrameViewInternal(offset_to_address(offset), footer.enable_lz4_compression);
+                node_internal_address = (uint8_t *)internal.frame_view.get_view().data();
 
                 if (mode == EXACT)
                 {
@@ -412,7 +423,8 @@ namespace ninedb::pbt
             next_level:;
             }
 
-            node_leaf_address = offset_to_address(offset);
+            leaf = detail::FrameViewLeaf(offset_to_address(offset), footer.enable_lz4_compression);
+            uint8_t *node_leaf_address = (uint8_t *)leaf.frame_view.get_view().data();
             uint64_t num_children = detail::NodeLeaf::read_num_children(node_leaf_address);
 
             for (uint64_t i = 0; i < num_children; i++)
@@ -450,7 +462,7 @@ namespace ninedb::pbt
         {
             ZonePbtReader;
 
-            uint8_t *address = offset_to_address(storage->get_size() - detail::Footer::size_of());
+            uint8_t *address = offset_to_address(storage->get_size() - detail::Footer::size());
             detail::Footer::read(address, footer);
             footer.validate();
         }

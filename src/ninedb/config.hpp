@@ -25,6 +25,7 @@ namespace ninedb
         pbt::WriterConfig writer = {
             16,
             1 << 23,
+            false,
             nullptr,
             false,
         };
