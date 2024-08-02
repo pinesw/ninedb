@@ -60,7 +60,7 @@ void test_get_by_key()
     }
     db.flush();
 
-    std::string_view value;
+    std::string value;
     for (uint64_t i = 0; i < keys.size(); i++)
     {
         bool found = db.get(keys[i], value);
@@ -93,8 +93,8 @@ void test_get_by_index()
     }
     db.flush();
 
-    std::string_view key;
-    std::string_view value;
+    std::string key;
+    std::string value;
     for (uint64_t i = 0; i < keys.size(); i++)
     {
         bool found = db.at(i, key, value);
@@ -307,7 +307,7 @@ void test_reopen()
     }
     db2.flush();
 
-    std::string_view value;
+    std::string value;
     for (uint64_t i = 0; i < keys.size(); i++)
     {
         bool found = db2.get(keys[i], value);
@@ -361,7 +361,7 @@ void benchmark_get()
     db.compact();
 
     auto t1 = std::chrono::high_resolution_clock::now();
-    std::string_view value;
+    std::string value;
     for (uint64_t i = 0; i < keys.size(); i++)
     {
         bool found = db.get(keys[i], value);

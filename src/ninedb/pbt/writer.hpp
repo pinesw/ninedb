@@ -172,8 +172,8 @@ namespace ninedb::pbt
             footer.global_start = global_start;
             footer.global_end = global_start + num_entries;
 
-            std::vector<std::string_view> keys;
-            std::vector<std::string_view> values;
+            std::vector<std::string> keys;
+            std::vector<std::string> values;
             std::vector<std::string> reduced_values;
             keys.resize(config.max_node_children + 1);
             values.resize(config.max_node_children);
@@ -312,7 +312,7 @@ namespace ninedb::pbt
             }
         }
 
-        uint64_t read_node_metadata(uint64_t offset, uint64_t level, uint64_t &entry_count, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
+        uint64_t read_node_metadata(uint64_t offset, uint64_t level, uint64_t &entry_count, std::vector<std::string> &values, std::string *first_key, std::string *last_key) const
         {
             ZonePbtWriter;
 
@@ -327,10 +327,8 @@ namespace ninedb::pbt
             }
         }
 
-        uint64_t read_node_leaf_metadata(uint8_t *address, uint64_t &entry_count, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
+        uint64_t read_node_leaf_metadata(uint8_t *address, uint64_t &entry_count, std::vector<std::string> &values, std::string *first_key, std::string *last_key) const
         {
-            // TODO: string_views are not valid after the buffer is destroyed in the scope of this function. Same for internal.
-
             if (config.enable_lz4_compression)
             {
                 std::string buffer;
@@ -344,7 +342,7 @@ namespace ninedb::pbt
             }
         }
 
-        uint64_t read_node_leaf_metadata_uncompressed(uint8_t *address, uint64_t &entry_count, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
+        uint64_t read_node_leaf_metadata_uncompressed(uint8_t *address, uint64_t &entry_count, std::vector<std::string> &values, std::string *first_key, std::string *last_key) const
         {
             entry_count = detail::NodeLeaf::read_num_children(address);
             values.resize(entry_count);
@@ -363,7 +361,7 @@ namespace ninedb::pbt
             return detail::NodeLeaf::size(address);
         }
 
-        uint64_t read_node_internal_metadata(uint8_t *address, uint64_t &entry_count, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
+        uint64_t read_node_internal_metadata(uint8_t *address, uint64_t &entry_count, std::vector<std::string> &values, std::string *first_key, std::string *last_key) const
         {
             if (config.enable_lz4_compression)
             {
@@ -378,7 +376,7 @@ namespace ninedb::pbt
             }
         }
 
-        uint64_t read_node_internal_metadata_uncompressed(uint8_t *address, uint64_t &entry_count, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
+        uint64_t read_node_internal_metadata_uncompressed(uint8_t *address, uint64_t &entry_count, std::vector<std::string> &values, std::string *first_key, std::string *last_key) const
         {
             uint64_t num_children = detail::NodeInternal::read_num_children(address);
             entry_count = 0;

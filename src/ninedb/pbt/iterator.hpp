@@ -18,7 +18,10 @@ namespace ninedb::pbt
         {
             ZonePbtIterator;
 
-            leaf = detail::FrameViewLeaf(node_address, compression_enabled);
+            if (node_address != nullptr)
+            {
+                leaf = detail::FrameViewLeaf(node_address, compression_enabled);
+            }
 
             if (remaining_entries >= 1)
             {

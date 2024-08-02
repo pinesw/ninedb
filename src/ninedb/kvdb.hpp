@@ -79,7 +79,7 @@ namespace ninedb
          * If the key does not exist, false will be returned.
          * Otherwise, true will be returned and the value will be set.
          */
-        bool get(std::string_view key, std::string_view &value) const
+        bool get(std::string_view key, std::string &value) const
         {
             ZoneDb;
 
@@ -96,11 +96,11 @@ namespace ninedb
         /**
          * Get the first value for the given key.
          */
-        std::optional<std::string_view> get(std::string_view key) const
+        std::optional<std::string> get(std::string_view key) const
         {
             ZoneDb;
 
-            std::string_view value;
+            std::string value;
             if (get(key, value))
             {
                 return value;
@@ -113,7 +113,7 @@ namespace ninedb
          * If the index is out of range, false will be returned.
          * Otherwise, true will be returned and the key and value will be set.
          */
-        bool at(uint64_t index, std::string_view &key, std::string_view &value) const
+        bool at(uint64_t index, std::string &key, std::string &value) const
         {
             ZoneDb;
 
@@ -134,11 +134,11 @@ namespace ninedb
          * Get the key-value pair at the given index.
          * If the index is out of range, std::nullopt will be returned.
          */
-        std::optional<std::pair<std::string_view, std::string_view>> at(uint64_t index) const
+        std::optional<std::pair<std::string, std::string>> at(uint64_t index) const
         {
             ZoneDb;
 
-            std::pair<std::string_view, std::string_view> result;
+            std::pair<std::string, std::string> result;
             if (at(index, result.first, result.second))
             {
                 return result;

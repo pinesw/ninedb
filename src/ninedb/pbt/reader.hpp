@@ -49,7 +49,7 @@ namespace ninedb::pbt
          * If the key exists, the value is written to the given string.
          * If the key occurs multiple times, the value of the first occurrence is written.
          */
-        bool get(std::string_view key, std::string_view &value)
+        bool get(std::string_view key, std::string &value)
         {
             ZonePbtReader;
 
@@ -74,11 +74,11 @@ namespace ninedb::pbt
         /**
          * Get the value for the given key.
          */
-        std::optional<std::string_view> get(std::string_view key)
+        std::optional<std::string> get(std::string_view key)
         {
             ZonePbtReader;
 
-            std::string_view value;
+            std::string value;
             if (get(key, value))
             {
                 return value;
@@ -91,7 +91,7 @@ namespace ninedb::pbt
          * Returns true if the index is in bounds, false otherwise.
          * If the index is in bounds, the key and value are written to the given strings.
          */
-        bool at(uint64_t index, std::string_view &key, std::string_view &value)
+        bool at(uint64_t index, std::string &key, std::string &value)
         {
             ZonePbtReader;
 
@@ -118,12 +118,12 @@ namespace ninedb::pbt
          * Get the key and value at the given index.
          * The first element of the pair is the key, the second element is the value.
          */
-        std::optional<std::pair<std::string_view, std::string_view>> at(uint64_t index)
+        std::optional<std::pair<std::string, std::string>> at(uint64_t index)
         {
             ZonePbtReader;
 
-            std::string_view key;
-            std::string_view value;
+            std::string key;
+            std::string value;
             if (at(index, key, value))
             {
                 return std::make_pair(key, value);
@@ -155,7 +155,7 @@ namespace ninedb::pbt
                 return end();
             }
 
-            uint8_t *node_leaf_address = (uint8_t *)leaf.frame_view.get_view().data();
+            uint8_t *node_leaf_address = (uint8_t *)leaf.frame_view.original.data();
             return Iterator(node_leaf_address, footer.enable_lz4_compression, entry_index, footer.global_end - footer.global_start - entry_start);
         }
 
@@ -235,7 +235,7 @@ namespace ninedb::pbt
                 return end();
             }
 
-            uint8_t *node_leaf_address = (uint8_t *)leaf.frame_view.get_view().data();
+            uint8_t *node_leaf_address = (uint8_t *)leaf.frame_view.original.data();
             return Iterator(node_leaf_address, footer.enable_lz4_compression, entry_index, footer.global_end - footer.global_start - index);
         }
 

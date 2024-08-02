@@ -23,3 +23,5 @@ New:
 - Add flags for compression vs. performance: varints/fixed ints, compression, key prefixes, read cache (RLU)
 
 - Refactor write/read methods: return length of written bytes, no pointer faffing
+
+- Use binary search within nodes instead of looping
