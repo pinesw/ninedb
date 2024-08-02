@@ -341,8 +341,6 @@ namespace ninedb::pbt
             {
                 node_internal_address = offset_to_address(offset);
 
-                // TODO: binary search?
-
                 uint16_t num_children = detail::NodeInternal::read_num_children(node_internal_address);
                 for (uint16_t i = 0; i < num_children; i++)
                 {

@@ -124,7 +124,7 @@ void test_negative_results()
     generate_keys_sequence(10000, keys);
     generate_values_sequence(10000, values);
 
-    KvDb db = KvDb::open("test_get_by_key", get_test_config());
+    KvDb db = KvDb::open("test_negative_results", get_test_config());
     for (uint64_t i = 0; i < keys.size(); i++)
     {
         db.add(keys[i], values[i]);
@@ -417,6 +417,37 @@ void benchmark_get()
     std::cout << "benchmark_get: " << duration.count() << " μs" << std::endl;
 }
 
+void benchmark_at()
+{
+    std::vector<std::string> keys;
+    std::vector<std::string> values;
+    generate_keys_sequence(100000, keys);
+    generate_values_sequence(100000, values);
+
+    KvDb db = KvDb::open("benchmark_at", get_benchmark_config());
+    for (uint64_t i = 0; i < keys.size(); i++)
+    {
+        db.add(keys[i], values[i]);
+    }
+    db.compact();
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+    std::string_view key;
+    std::string_view value;
+    for (uint64_t i = 0; i < keys.size(); i++)
+    {
+        bool found = db.at(i, key, value);
+        if (!found)
+        {
+            std::cout << "not found" << std::endl;
+        }
+    }
+    auto t2 = std::chrono::high_resolution_clock::now();
+
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
+    std::cout << "benchmark_at: " << duration.count() << " μs" << std::endl;
+}
+
 void benchmark_iterator()
 {
     std::vector<std::string> keys;
@@ -466,6 +497,7 @@ int main()
 
     benchmark_add();
     benchmark_get();
+    benchmark_at();
     benchmark_iterator();
 
     return 0;
