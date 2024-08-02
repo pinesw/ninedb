@@ -117,6 +117,48 @@ void test_get_by_index()
     std::cout << "test_get_by_index done" << std::endl;
 }
 
+void test_negative_results()
+{
+    std::vector<std::string> keys;
+    std::vector<std::string> values;
+    generate_keys_sequence(10000, keys);
+    generate_values_sequence(10000, values);
+
+    KvDb db = KvDb::open("test_get_by_key", get_test_config());
+    for (uint64_t i = 0; i < keys.size(); i++)
+    {
+        db.add(keys[i], values[i]);
+    }
+    db.flush();
+
+    std::string_view key;
+    std::string_view value;
+
+    std::vector<std::string> negative_keys = {"", "key", "key_-1", "key_10000", "zzz"};
+    for (uint64_t i = 0; i < negative_keys.size(); i++)
+    {
+        bool found = db.get(negative_keys[i], value);
+        if (found)
+        {
+            std::cout << "unexpected found" << std::endl;
+            exit(1);
+        }
+    }
+
+    std::vector<uint64_t> negative_indexes = {10000, 10001, 10002};
+    for (uint64_t i = 0; i < negative_indexes.size(); i++)
+    {
+        bool found = db.at(negative_indexes[i], key, value);
+        if (found)
+        {
+            std::cout << "unexpected found" << std::endl;
+            exit(1);
+        }
+    }
+
+    std::cout << "test_negative_results done" << std::endl;
+}
+
 void test_iterator_begin()
 {
     std::vector<std::string> keys;
@@ -415,6 +457,7 @@ int main()
 {
     test_get_by_key();
     test_get_by_index();
+    test_negative_results();
     test_iterator_begin();
     test_iterator_seek_key();
     test_iterator_seek_index();

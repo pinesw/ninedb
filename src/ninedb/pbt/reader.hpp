@@ -153,7 +153,7 @@ namespace ninedb::pbt
                 return end();
             }
 
-            return Iterator(node_leaf_address, entry_index, footer.global_end - footer.global_start - entry_start);
+            return Iterator(node_leaf_address, entry_index, count() - entry_start);
         }
 
         /**
@@ -232,7 +232,7 @@ namespace ninedb::pbt
                 return end();
             }
 
-            return Iterator(node_leaf_address, entry_index, footer.global_end - footer.global_start - index);
+            return Iterator(node_leaf_address, entry_index, count() - index);
         }
 
         /**
@@ -243,7 +243,7 @@ namespace ninedb::pbt
         {
             ZonePbtReader;
 
-            return Iterator(offset_to_address(0), 0, footer.global_end - footer.global_start);
+            return Iterator(offset_to_address(0), 0, count());
         }
 
         /**
@@ -295,7 +295,7 @@ namespace ninedb::pbt
             if (height >= 2)
             {
                 uint8_t *node_internal_address = offset_to_address(offset);
-                uint64_t num_children = detail::NodeInternal::read_num_children(node_internal_address);
+                uint16_t num_children = detail::NodeInternal::read_num_children(node_internal_address);
 
                 for (uint64_t i = 0; i < num_children; i++)
                 {
@@ -308,7 +308,7 @@ namespace ninedb::pbt
             else
             {
                 uint8_t *node_leaf_address = offset_to_address(offset);
-                uint64_t num_children = detail::NodeLeaf::read_num_children(node_leaf_address);
+                uint16_t num_children = detail::NodeLeaf::read_num_children(node_leaf_address);
 
                 for (uint64_t i = 0; i < num_children; i++)
                 {
@@ -326,45 +326,49 @@ namespace ninedb::pbt
         {
             ZonePbtReader;
 
+            if (index >= count())
+            {
+                return false;
+            }
+
             uint64_t offset = footer.root_offset;
             uint64_t height = footer.tree_height;
 
-            uint8_t *node_internal_address = nullptr;
+            uint8_t *node_internal_address;
+            uint64_t leaf_entry_start = 0;
 
             while (height >= 2)
             {
                 node_internal_address = offset_to_address(offset);
 
-                uint64_t num_children = detail::NodeInternal::read_num_children(node_internal_address);
+                // TODO: binary search?
 
-                for (uint64_t i = 0; i < num_children; i++)
+                uint16_t num_children = detail::NodeInternal::read_num_children(node_internal_address);
+                for (uint16_t i = 0; i < num_children; i++)
                 {
-                    uint64_t child_entry_count = detail::NodeInternal::read_child_entry_count(node_internal_address, i);
-
-                    if (index < child_entry_count)
+                    if (i == num_children - 1)
                     {
                         offset = detail::NodeInternal::read_child_offset(node_internal_address, i);
-                        height--;
-                        goto next_level;
+                        break;
                     }
 
-                    index -= child_entry_count;
+                    uint64_t read_child_entry_start = detail::NodeInternal::read_child_entry_start(node_internal_address, i + 1);
+
+                    if (index < read_child_entry_start)
+                    {
+                        offset = detail::NodeInternal::read_child_offset(node_internal_address, i);
+                        break;
+                    }
+
+                    leaf_entry_start = read_child_entry_start;
                 }
 
-                return false;
-
-            next_level:;
+                height--;
             }
 
             node_leaf_address = offset_to_address(offset);
-            uint64_t num_children = detail::NodeLeaf::read_num_children(node_leaf_address);
-
-            if (num_children <= 0 || index >= num_children)
-            {
-                return false;
-            }
-
-            entry_index = index;
+            uint16_t num_children = detail::NodeLeaf::read_num_children(node_leaf_address);
+            entry_index = index - leaf_entry_start;
 
             return true;
         }
@@ -391,29 +395,42 @@ namespace ninedb::pbt
                     }
                 }
 
-                uint64_t num_children = detail::NodeInternal::read_num_children(node_internal_address);
+                uint16_t num_children = detail::NodeInternal::read_num_children(node_internal_address);
 
-                for (uint64_t i = 0; i < num_children; i++)
+                uint64_t lo = 0;
+                uint64_t hi = num_children - 1;
+                while (lo < hi)
                 {
-                    if (key.compare(detail::NodeInternal::read_right_key(node_internal_address, i)) <= 0)
+                    uint64_t mid = lo + (hi - lo) / 2;
+                    if (key.compare(detail::NodeInternal::read_right_key(node_internal_address, mid)) <= 0)
                     {
-                        offset = detail::NodeInternal::read_child_offset(node_internal_address, i);
-                        height--;
-                        goto next_level;
+                        hi = mid;
                     }
-                    if (entry_start != nullptr)
+                    else
                     {
-                        *entry_start += detail::NodeInternal::read_child_entry_count(node_internal_address, i);
+                        lo = mid + 1;
                     }
                 }
 
-                return false;
+                if (mode == EXACT)
+                {
+                    if (key.compare(detail::NodeInternal::read_right_key(node_internal_address, lo)) > 0)
+                    {
+                        return false;
+                    }
+                }
 
-            next_level:;
+                if (entry_start != nullptr)
+                {
+                    *entry_start = detail::NodeInternal::read_child_entry_start(node_internal_address, lo);
+                }
+
+                offset = detail::NodeInternal::read_child_offset(node_internal_address, lo);
+                height--;
             }
 
             node_leaf_address = offset_to_address(offset);
-            uint64_t num_children = detail::NodeLeaf::read_num_children(node_leaf_address);
+            uint16_t num_children = detail::NodeLeaf::read_num_children(node_leaf_address);
 
             for (uint64_t i = 0; i < num_children; i++)
             {

@@ -166,7 +166,7 @@ namespace ninedb::pbt::detail
             uint64_t header_size = sizeof(uint16_t) + 3 * sizeof(uint64_t) * node.num_children;
 
             address += Format::write_uint16(address, node.num_children);
-            for (uint64_t i = 0; i < node.num_children; i++)
+            for (uint16_t i = 0; i < node.num_children; i++)
             {
                 address += Format::write_uint64(address, node.data_offsets[i] + header_size);
                 address += Format::write_uint64(address, node.key_sizes[i]);
@@ -244,24 +244,24 @@ namespace ninedb::pbt::detail
         std::vector<uint64_t> data_offsets;
         std::vector<uint64_t> key_sizes;
         std::vector<uint64_t> reduced_value_sizes;
-        std::vector<uint64_t> child_entry_counts;
+        std::vector<uint64_t> child_entry_starts;
         std::vector<uint64_t> child_offsets;
         std::vector<uint64_t> child_sizes;
         std::string data;
 
         NodeInternalBuilder() : num_children(0) {}
 
-        void add_first_child(const std::string_view &left_key, const std::string_view &right_key, const std::string_view &reduced_value, uint64_t child_entry_count, uint64_t child_offset, uint64_t child_size)
+        void add_first_child(const std::string_view &left_key, const std::string_view &right_key, const std::string_view &reduced_value, uint64_t child_entry_start, uint64_t child_offset, uint64_t child_size)
         {
             ZonePbtStructures;
 
             data_offsets.push_back(data.size());
             key_sizes.push_back(left_key.size());
             data.append(left_key);
-            add_child(right_key, reduced_value, child_entry_count, child_offset, child_size);
+            add_child(right_key, reduced_value, child_entry_start, child_offset, child_size);
         }
 
-        void add_child(const std::string_view &right_key, const std::string_view &reduced_value, uint64_t child_entry_count, uint64_t child_offset, uint64_t child_size)
+        void add_child(const std::string_view &right_key, const std::string_view &reduced_value, uint64_t child_entry_start, uint64_t child_offset, uint64_t child_size)
         {
             ZonePbtStructures;
 
@@ -269,7 +269,7 @@ namespace ninedb::pbt::detail
             data_offsets.push_back(data.size());
             key_sizes.push_back(right_key.size());
             reduced_value_sizes.push_back(reduced_value.size());
-            child_entry_counts.push_back(child_entry_count);
+            child_entry_starts.push_back(child_entry_start);
             child_offsets.push_back(child_offset);
             child_sizes.push_back(child_size);
             data.append(right_key);
@@ -284,7 +284,7 @@ namespace ninedb::pbt::detail
             data_offsets.clear();
             key_sizes.clear();
             reduced_value_sizes.clear();
-            child_entry_counts.clear();
+            child_entry_starts.clear();
             child_offsets.clear();
             child_sizes.clear();
             data.clear();
@@ -319,12 +319,12 @@ namespace ninedb::pbt::detail
 
             address += Format::write_uint64(address, node.data_offsets[0] + header_size);
             address += Format::write_uint64(address, node.key_sizes[0]);
-            for (uint64_t i = 0; i < node.num_children; i++)
+            for (uint16_t i = 0; i < node.num_children; i++)
             {
                 address += Format::write_uint64(address, node.data_offsets[i + 1] + header_size);
                 address += Format::write_uint64(address, node.key_sizes[i + 1]);
                 address += Format::write_uint64(address, node.reduced_value_sizes[i]);
-                address += Format::write_uint64(address, node.child_entry_counts[i]);
+                address += Format::write_uint64(address, node.child_entry_starts[i]);
                 address += Format::write_uint64(address, node.child_offsets[i]);
                 address += Format::write_uint64(address, node.child_sizes[i]);
             }
@@ -405,16 +405,16 @@ namespace ninedb::pbt::detail
             return std::string_view((char *)base_address + data_offset + key_size, reduced_value_size);
         }
 
-        static uint64_t read_child_entry_count(uint8_t *address, uint16_t i)
+        static uint64_t read_child_entry_start(uint8_t *address, uint16_t i)
         {
             ZonePbtStructures;
 
             address += sizeof(uint16_t) + 2 * sizeof(uint64_t) + 6 * sizeof(uint64_t) * i;
-            uint64_t child_entry_count;
+            uint64_t child_entry_start;
             address += Format::skip_uint64(3);
-            address += Format::read_uint64(address, child_entry_count);
+            address += Format::read_uint64(address, child_entry_start);
 
-            return child_entry_count;
+            return child_entry_start;
         }
 
         static uint64_t read_child_offset(uint8_t *address, uint16_t i)

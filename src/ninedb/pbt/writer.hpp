@@ -177,29 +177,31 @@ namespace ninedb::pbt
             keys.resize(config.max_node_children + 1);
             values.resize(config.max_node_children);
             reduced_values.resize(config.max_node_children);
+
             uint64_t read_offset = 0;
+            uint64_t child_entry_count_packed = config.max_node_children;
 
             for (size_t i = 1; i < footer.tree_height; i++)
             {
                 uint64_t num_level_entries = entry_counts[i];
+                uint64_t child_entry_start = 0;
 
                 for (uint64_t j = 0; j < num_level_entries; j += config.max_node_children)
                 {
-                    uint64_t num_children = std::min(config.max_node_children, num_level_entries - j);
+                    uint16_t num_children = std::min(config.max_node_children, num_level_entries - j);
 
-                    for (uint64_t k = 0; k < num_children; k++)
+                    for (uint16_t k = 0; k < num_children; k++)
                     {
-                        uint64_t child_entry_count;
                         uint64_t child_offset = read_offset;
                         uint64_t child_size;
 
                         if (k == 0)
                         {
-                            child_size = read_node_metadata(read_offset, i, child_entry_count, values, &keys[0], &keys[1]);
+                            child_size = read_node_metadata(read_offset, i, values, &keys[0], &keys[1]);
                         }
                         else
                         {
-                            child_size = read_node_metadata(read_offset, i, child_entry_count, values, nullptr, &keys[k + 1]);
+                            child_size = read_node_metadata(read_offset, i, values, nullptr, &keys[k + 1]);
                         }
 
                         if (config.reduce != nullptr)
@@ -209,19 +211,22 @@ namespace ninedb::pbt
 
                         if (k == 0)
                         {
-                            buffer_internal.add_first_child(keys[0], keys[1], reduced_values[0], child_entry_count, child_offset, child_size);
+                            buffer_internal.add_first_child(keys[0], keys[1], reduced_values[0], child_entry_start, child_offset, child_size);
                         }
                         else
                         {
-                            buffer_internal.add_child(keys[k + 1], reduced_values[k], child_entry_count, child_offset, child_size);
+                            buffer_internal.add_child(keys[k + 1], reduced_values[k], child_entry_start, child_offset, child_size);
                         }
 
                         read_offset += child_size;
+                        child_entry_start += child_entry_count_packed;
                     }
 
                     write_offset += write_node_internal(write_offset, buffer_internal);
                     buffer_internal.clear();
                 }
+
+                child_entry_count_packed *= config.max_node_children;
             }
 
             footer.root_offset = read_offset;
@@ -282,26 +287,26 @@ namespace ninedb::pbt
             return detail::NodeInternal::write(address, node);
         }
 
-        uint64_t read_node_metadata(uint64_t offset, uint64_t level, uint64_t &entry_count, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
+        uint64_t read_node_metadata(uint64_t offset, uint64_t level, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
         {
             ZonePbtWriter;
 
             uint8_t *address = (uint8_t *)storage->get_address() + offset;
             if (level <= 1)
             {
-                return read_node_leaf_metadata(address, entry_count, values, first_key, last_key);
+                return read_node_leaf_metadata(address, values, first_key, last_key);
             }
             else
             {
-                return read_node_internal_metadata(address, entry_count, values, first_key, last_key);
+                return read_node_internal_metadata(address, values, first_key, last_key);
             }
         }
 
-        uint64_t read_node_leaf_metadata(uint8_t *address, uint64_t &entry_count, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
+        uint64_t read_node_leaf_metadata(uint8_t *address, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
         {
-            entry_count = detail::NodeLeaf::read_num_children(address);
-            values.resize(entry_count);
-            for (uint64_t i = 0; i < entry_count; i++)
+            uint16_t num_children = detail::NodeLeaf::read_num_children(address);
+            values.resize(num_children);
+            for (uint16_t i = 0; i < num_children; i++)
             {
                 values[i] = detail::NodeLeaf::read_value(address, i);
             }
@@ -311,21 +316,16 @@ namespace ninedb::pbt
             }
             if (last_key != nullptr)
             {
-                *last_key = detail::NodeLeaf::read_key(address, entry_count - 1);
+                *last_key = detail::NodeLeaf::read_key(address, num_children - 1);
             }
             return detail::NodeLeaf::size_of(address);
         }
 
-        uint64_t read_node_internal_metadata(uint8_t *address, uint64_t &entry_count, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
+        uint64_t read_node_internal_metadata(uint8_t *address, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
         {
-            uint64_t num_children = detail::NodeInternal::read_num_children(address);
-            entry_count = 0;
-            for (uint64_t i = 0; i < num_children; i++)
-            {
-                entry_count += detail::NodeInternal::read_child_entry_count(address, i);
-            }
+            uint16_t num_children = detail::NodeInternal::read_num_children(address);
             values.resize(num_children);
-            for (uint64_t i = 0; i < num_children; i++)
+            for (uint16_t i = 0; i < num_children; i++)
             {
                 values[i] = detail::NodeInternal::read_reduced_value(address, i);
             }

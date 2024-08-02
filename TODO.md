@@ -25,3 +25,5 @@ New:
 - Refactor write/read methods: return length of written bytes, no pointer faffing
 
 - Use binary search within nodes instead of looping
+
+- Consider storing max_node_children into the PBT and then use tree path calculations to determine number of entries, child, start, end, etc.
