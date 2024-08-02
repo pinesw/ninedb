@@ -24,6 +24,7 @@ Config get_benchmark_config()
 {
     Config config;
     config.delete_if_exists = true;
+    config.writer.enable_lz4_compression = true;
     // config.writer.max_node_children = 16;
     return config;
 }

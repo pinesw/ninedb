@@ -31,7 +31,7 @@ namespace ninedb::pbt
             : Reader(std::make_shared<detail::Storage>(path, true)) {}
 
         Reader(const std::shared_ptr<detail::Storage> &storage)
-            : storage(storage)
+            : storage(storage), leaf_cache(64), internal_cache(64)
         {
             read_footer();
         }
@@ -59,14 +59,14 @@ namespace ninedb::pbt
             }
 
             uint64_t entry_index;
-            detail::FrameViewLeaf leaf;
+            std::shared_ptr<detail::FrameViewLeaf> leaf;
 
             if (!find<EXACT>(key, leaf, entry_index, nullptr))
             {
                 return false;
             }
 
-            uint8_t *node_leaf_address = (uint8_t *)leaf.frame_view.get_view().data();
+            uint8_t *node_leaf_address = (uint8_t *)leaf->frame_view.get_view().data();
             value = detail::NodeLeaf::read_value(node_leaf_address, entry_index);
             return true;
         }
@@ -101,14 +101,14 @@ namespace ninedb::pbt
             }
 
             uint64_t entry_index;
-            detail::FrameViewLeaf leaf;
+            std::shared_ptr<detail::FrameViewLeaf> leaf; leaf;
 
             if (!find_index(index, leaf, entry_index))
             {
                 return false;
             }
 
-            uint8_t *node_leaf_address = (uint8_t *)leaf.frame_view.get_view().data();
+            uint8_t *node_leaf_address = (uint8_t *)leaf->frame_view.get_view().data();
             key = detail::NodeLeaf::read_key(node_leaf_address, entry_index);
             value = detail::NodeLeaf::read_value(node_leaf_address, entry_index);
             return true;
@@ -148,14 +148,14 @@ namespace ninedb::pbt
 
             uint64_t entry_index;
             uint64_t entry_start = 0;
-            detail::FrameViewLeaf leaf;
+            std::shared_ptr<detail::FrameViewLeaf> leaf;
 
             if (!find<GREATER_OR_EQUAL>(key, leaf, entry_index, &entry_start))
             {
                 return end();
             }
 
-            uint8_t *node_leaf_address = (uint8_t *)leaf.frame_view.original.data();
+            uint8_t *node_leaf_address = (uint8_t *)leaf->frame_view.original.data();
             return Iterator(node_leaf_address, footer.enable_lz4_compression, entry_index, footer.global_end - footer.global_start - entry_start);
         }
 
@@ -228,14 +228,14 @@ namespace ninedb::pbt
             }
 
             uint64_t entry_index;
-            detail::FrameViewLeaf leaf;
+            std::shared_ptr<detail::FrameViewLeaf> leaf;
 
             if (!find_index(index, leaf, entry_index))
             {
                 return end();
             }
 
-            uint8_t *node_leaf_address = (uint8_t *)leaf.frame_view.original.data();
+            uint8_t *node_leaf_address = (uint8_t *)leaf->frame_view.original.data();
             return Iterator(node_leaf_address, footer.enable_lz4_compression, entry_index, footer.global_end - footer.global_start - index);
         }
 
@@ -291,6 +291,8 @@ namespace ninedb::pbt
     private:
         detail::Footer footer;
         std::shared_ptr<detail::Storage> storage;
+        ninedb::detail::RLRUCache<uint64_t, std::shared_ptr<detail::FrameViewLeaf>> leaf_cache;
+        ninedb::detail::RLRUCache<uint64_t, std::shared_ptr<detail::FrameViewInternal>> internal_cache;
 
         void traverse(const std::function<bool(std::string_view value)> &predicate, std::vector<std::string_view> &accumulator, uint64_t offset, uint64_t height)
         {
@@ -328,20 +330,20 @@ namespace ninedb::pbt
             }
         }
 
-        bool find_index(uint64_t index, detail::FrameViewLeaf &leaf, uint64_t &entry_index)
+        bool find_index(uint64_t index, std::shared_ptr<detail::FrameViewLeaf> &leaf, uint64_t &entry_index)
         {
             ZonePbtReader;
 
             uint64_t offset = footer.root_offset;
             uint64_t height = footer.tree_height;
 
-            detail::FrameViewInternal internal;
+            std::shared_ptr<detail::FrameViewInternal> internal;
             uint8_t *node_internal_address;
 
             while (height >= 2)
             {
-                internal = detail::FrameViewInternal(offset_to_address(offset), footer.enable_lz4_compression);
-                node_internal_address = (uint8_t *)internal.frame_view.get_view().data();
+                get_node_internal(offset, internal);
+                node_internal_address = (uint8_t *)internal->frame_view.get_view().data();
 
                 uint64_t num_children = detail::NodeInternal::read_num_children(node_internal_address);
 
@@ -364,8 +366,8 @@ namespace ninedb::pbt
             next_level:;
             }
 
-            leaf = detail::FrameViewLeaf(offset_to_address(offset), footer.enable_lz4_compression);
-            uint8_t *node_leaf_address = (uint8_t *)leaf.frame_view.get_view().data();
+            get_node_leaf(offset, leaf);
+            uint8_t *node_leaf_address = (uint8_t *)leaf->frame_view.get_view().data();
             uint64_t num_children = detail::NodeLeaf::read_num_children(node_leaf_address);
 
             if (num_children <= 0 || index >= num_children)
@@ -379,20 +381,20 @@ namespace ninedb::pbt
         }
 
         template <ReaderFindMode mode>
-        bool find(std::string_view key, detail::FrameViewLeaf &leaf, uint64_t &entry_index, uint64_t *entry_start)
+        bool find(std::string_view key, std::shared_ptr<detail::FrameViewLeaf> &leaf, uint64_t &entry_index, uint64_t *entry_start)
         {
             ZonePbtReader;
 
             uint64_t offset = footer.root_offset;
             uint64_t height = footer.tree_height;
 
-            detail::FrameViewInternal internal;
+            std::shared_ptr<detail::FrameViewInternal> internal;
             uint8_t *node_internal_address;
 
             while (height >= 2)
             {
-                internal = detail::FrameViewInternal(offset_to_address(offset), footer.enable_lz4_compression);
-                node_internal_address = (uint8_t *)internal.frame_view.get_view().data();
+                get_node_internal(offset, internal);
+                node_internal_address = (uint8_t *)internal->frame_view.get_view().data();
 
                 if (mode == EXACT)
                 {
@@ -423,8 +425,8 @@ namespace ninedb::pbt
             next_level:;
             }
 
-            leaf = detail::FrameViewLeaf(offset_to_address(offset), footer.enable_lz4_compression);
-            uint8_t *node_leaf_address = (uint8_t *)leaf.frame_view.get_view().data();
+            get_node_leaf(offset, leaf);
+            uint8_t *node_leaf_address = (uint8_t *)leaf->frame_view.get_view().data();
             uint64_t num_children = detail::NodeLeaf::read_num_children(node_leaf_address);
 
             for (uint64_t i = 0; i < num_children; i++)
@@ -479,6 +481,28 @@ namespace ninedb::pbt
             ZonePbtReader;
 
             return (uint64_t)(address - (uint8_t *)storage->get_address());
+        }
+
+        void get_node_leaf(uint64_t offset, std::shared_ptr<detail::FrameViewLeaf> &leaf)
+        {
+            ZonePbtReader;
+
+            if (!leaf_cache.try_get(offset, leaf))
+            {
+                leaf = std::make_shared<detail::FrameViewLeaf>(offset_to_address(offset), footer.enable_lz4_compression);
+                leaf_cache.put(offset, leaf);
+            }
+        }
+
+        void get_node_internal(uint64_t offset, std::shared_ptr<detail::FrameViewInternal> &internal)
+        {
+            ZonePbtReader;
+
+            if (!internal_cache.try_get(offset, internal))
+            {
+                internal = std::make_shared<detail::FrameViewInternal>(offset_to_address(offset), footer.enable_lz4_compression);
+                internal_cache.put(offset, internal);
+            }
         }
     };
 }
