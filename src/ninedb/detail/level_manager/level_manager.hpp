@@ -9,8 +9,7 @@
 #include <vector>
 
 #include "./structures.hpp"
-
-#include "../../pbt/file_utils.hpp"
+#include "../../pbt/reader.hpp"
 
 namespace ninedb::detail::level_manager
 {
@@ -88,7 +87,7 @@ namespace ninedb::detail::level_manager
             {
                 std::sort(level.indices.begin(), level.indices.end());
             }
-            auto footer = pbt::read_footer(max_index_file_path);
+            auto footer = pbt::Reader::read_footer_from_file(max_index_file_path);
             state.global_start = footer.global_end;
         }
 
