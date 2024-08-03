@@ -11,7 +11,7 @@ namespace ninedb::pbt
 {
     struct Iterator
     {
-        Iterator(uint8_t *node_address, uint64_t entry_index, uint64_t remaining_entries)
+        Iterator(char *node_address, uint64_t entry_index, uint64_t remaining_entries)
             : node_address(node_address), entry_index(entry_index), remaining_entries(remaining_entries)
         {
             ZonePbtIterator;
@@ -73,7 +73,7 @@ namespace ninedb::pbt
         }
 
     private:
-        uint8_t *node_address;
+        char *node_address;
         uint64_t entry_index;
         uint64_t remaining_entries;
         uint64_t current_num_children;

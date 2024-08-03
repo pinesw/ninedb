@@ -10,13 +10,12 @@
 
 namespace ninedb::pbt::detail
 {
-    constexpr uint32_t VERSION_MAJOR = 0;
-    constexpr uint32_t VERSION_MINOR = 1;
-
 #pragma pack(push, 1)
     struct Footer
     {
         static const uint32_t MAGIC = 0x1EAF1111;
+        static const uint32_t VERSION_MAJOR = 0;
+        static const uint32_t VERSION_MINOR = 1;
 
         // Root node handle.
         uint64_t root_offset;
@@ -48,7 +47,7 @@ namespace ninedb::pbt::detail
             this->magic = MAGIC;
         }
 
-        static uint64_t write(uint8_t *address, const Footer &footer)
+        static uint64_t write(char *address, const Footer &footer)
         {
             ZonePbtStructures;
 
@@ -64,7 +63,7 @@ namespace ninedb::pbt::detail
             return Footer::size_of();
         }
 
-        static uint64_t read(uint8_t *address, Footer &footer)
+        static uint64_t read(char *address, Footer &footer)
         {
             ZonePbtFormat;
 
@@ -158,11 +157,11 @@ namespace ninedb::pbt::detail
      */
     struct NodeLeaf
     {
-        static uint64_t write(uint8_t *address, const NodeLeafBuilder &node)
+        static uint64_t write(char *address, const NodeLeafBuilder &node)
         {
             ZonePbtStructures;
 
-            uint8_t *base_address = address;
+            char *base_address = address;
             uint64_t header_size = sizeof(uint16_t) + 3 * sizeof(uint64_t) * node.num_children;
 
             address += Format::write_uint16(address, node.num_children);
@@ -177,7 +176,7 @@ namespace ninedb::pbt::detail
             return address - base_address;
         }
 
-        static uint64_t size_of(uint8_t *address)
+        static uint64_t size_of(char *address)
         {
             ZonePbtStructures;
 
@@ -195,7 +194,7 @@ namespace ninedb::pbt::detail
             return data_offset + key_size + value_size;
         }
 
-        static uint16_t read_num_children(uint8_t *address)
+        static uint16_t read_num_children(char *address)
         {
             ZonePbtStructures;
 
@@ -204,11 +203,11 @@ namespace ninedb::pbt::detail
             return num_children;
         }
 
-        static std::string_view read_key(uint8_t *address, uint16_t i)
+        static std::string_view read_key(char *address, uint16_t i)
         {
             ZonePbtStructures;
 
-            uint8_t *base_address = address;
+            char *base_address = address;
             address += sizeof(uint16_t) + 3 * sizeof(uint64_t) * i;
             uint64_t data_offset;
             uint64_t key_size;
@@ -218,11 +217,11 @@ namespace ninedb::pbt::detail
             return std::string_view((char *)base_address + data_offset, key_size);
         }
 
-        static std::string_view read_value(uint8_t *address, uint16_t i)
+        static std::string_view read_value(char *address, uint16_t i)
         {
             ZonePbtStructures;
 
-            uint8_t *base_address = address;
+            char *base_address = address;
             address += sizeof(uint16_t) + 3 * sizeof(uint64_t) * i;
             uint64_t data_offset;
             uint64_t key_size;
@@ -308,11 +307,11 @@ namespace ninedb::pbt::detail
      */
     struct NodeInternal
     {
-        static uint64_t write(uint8_t *address, const NodeInternalBuilder &node)
+        static uint64_t write(char *address, const NodeInternalBuilder &node)
         {
             ZonePbtStructures;
 
-            uint8_t *base_address = address;
+            char *base_address = address;
             uint64_t header_size = sizeof(uint16_t) + 2 * sizeof(uint64_t) + 6 * sizeof(uint64_t) * node.num_children;
 
             address += Format::write_uint16(address, node.num_children);
@@ -334,7 +333,7 @@ namespace ninedb::pbt::detail
             return address - base_address;
         }
 
-        static uint64_t size_of(uint8_t *address)
+        static uint64_t size_of(char *address)
         {
             ZonePbtStructures;
 
@@ -352,7 +351,7 @@ namespace ninedb::pbt::detail
             return data_offset + key_size + reduced_value_size;
         }
 
-        static uint16_t read_num_children(uint8_t *address)
+        static uint16_t read_num_children(char *address)
         {
             ZonePbtStructures;
 
@@ -361,11 +360,11 @@ namespace ninedb::pbt::detail
             return num_children;
         }
 
-        static std::string_view read_left_key(uint8_t *address)
+        static std::string_view read_left_key(char *address)
         {
             ZonePbtStructures;
 
-            uint8_t *base_address = address;
+            char *base_address = address;
             address += sizeof(uint16_t);
             uint64_t data_offset;
             uint64_t key_size;
@@ -375,11 +374,11 @@ namespace ninedb::pbt::detail
             return std::string_view((char *)base_address + data_offset, key_size);
         }
 
-        static std::string_view read_right_key(uint8_t *address, uint16_t i)
+        static std::string_view read_right_key(char *address, uint16_t i)
         {
             ZonePbtStructures;
 
-            uint8_t *base_address = address;
+            char *base_address = address;
             address += sizeof(uint16_t) + 2 * sizeof(uint64_t) + 6 * sizeof(uint64_t) * i;
             uint64_t data_offset;
             uint64_t key_size;
@@ -389,11 +388,11 @@ namespace ninedb::pbt::detail
             return std::string_view((char *)base_address + data_offset, key_size);
         }
 
-        static std::string_view read_reduced_value(uint8_t *address, uint16_t i)
+        static std::string_view read_reduced_value(char *address, uint16_t i)
         {
             ZonePbtStructures;
 
-            uint8_t *base_address = address;
+            char *base_address = address;
             address += sizeof(uint16_t) + 2 * sizeof(uint64_t) + 6 * sizeof(uint64_t) * i;
             uint64_t data_offset;
             uint64_t key_size;
@@ -405,7 +404,7 @@ namespace ninedb::pbt::detail
             return std::string_view((char *)base_address + data_offset + key_size, reduced_value_size);
         }
 
-        static uint64_t read_child_entry_start(uint8_t *address, uint16_t i)
+        static uint64_t read_child_entry_start(char *address, uint16_t i)
         {
             ZonePbtStructures;
 
@@ -417,7 +416,7 @@ namespace ninedb::pbt::detail
             return child_entry_start;
         }
 
-        static uint64_t read_child_offset(uint8_t *address, uint16_t i)
+        static uint64_t read_child_offset(char *address, uint16_t i)
         {
             ZonePbtStructures;
 
@@ -429,7 +428,7 @@ namespace ninedb::pbt::detail
             return child_offset;
         }
 
-        static uint64_t read_child_size(uint8_t *address, uint16_t i)
+        static uint64_t read_child_size(char *address, uint16_t i)
         {
             ZonePbtStructures;
 

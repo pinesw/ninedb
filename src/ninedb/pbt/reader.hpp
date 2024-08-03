@@ -59,7 +59,7 @@ namespace ninedb::pbt
             }
 
             uint64_t entry_index;
-            uint8_t *node_leaf_address;
+            char *node_leaf_address;
 
             if (!find<EXACT>(key, node_leaf_address, entry_index, nullptr))
             {
@@ -100,7 +100,7 @@ namespace ninedb::pbt
             }
 
             uint64_t entry_index;
-            uint8_t *node_leaf_address;
+            char *node_leaf_address;
 
             if (!find_index(index, node_leaf_address, entry_index))
             {
@@ -146,7 +146,7 @@ namespace ninedb::pbt
 
             uint64_t entry_index;
             uint64_t entry_start = 0;
-            uint8_t *node_leaf_address;
+            char *node_leaf_address;
 
             if (!find<GREATER_OR_EQUAL>(key, node_leaf_address, entry_index, &entry_start))
             {
@@ -225,7 +225,7 @@ namespace ninedb::pbt
             }
 
             uint64_t entry_index;
-            uint8_t *node_leaf_address;
+            char *node_leaf_address;
 
             if (!find_index(index, node_leaf_address, entry_index))
             {
@@ -294,7 +294,7 @@ namespace ninedb::pbt
 
             if (height >= 2)
             {
-                uint8_t *node_internal_address = offset_to_address(offset);
+                char *node_internal_address = offset_to_address(offset);
                 uint16_t num_children = detail::NodeInternal::read_num_children(node_internal_address);
 
                 for (uint64_t i = 0; i < num_children; i++)
@@ -307,7 +307,7 @@ namespace ninedb::pbt
             }
             else
             {
-                uint8_t *node_leaf_address = offset_to_address(offset);
+                char *node_leaf_address = offset_to_address(offset);
                 uint16_t num_children = detail::NodeLeaf::read_num_children(node_leaf_address);
 
                 for (uint64_t i = 0; i < num_children; i++)
@@ -322,7 +322,7 @@ namespace ninedb::pbt
             }
         }
 
-        bool find_index(uint64_t index, uint8_t *&node_leaf_address, uint64_t &entry_index)
+        bool find_index(uint64_t index, char *&node_leaf_address, uint64_t &entry_index)
         {
             ZonePbtReader;
 
@@ -334,7 +334,7 @@ namespace ninedb::pbt
             uint64_t offset = footer.root_offset;
             uint64_t height = footer.tree_height;
 
-            uint8_t *node_internal_address;
+            char *node_internal_address;
             uint64_t leaf_entry_start = 0;
 
             while (height >= 2)
@@ -372,14 +372,14 @@ namespace ninedb::pbt
         }
 
         template <ReaderFindMode mode>
-        bool find(std::string_view key, uint8_t *&node_leaf_address, uint64_t &entry_index, uint64_t *entry_start)
+        bool find(std::string_view key, char *&node_leaf_address, uint64_t &entry_index, uint64_t *entry_start)
         {
             ZonePbtReader;
 
             uint64_t offset = footer.root_offset;
             uint64_t height = footer.tree_height;
 
-            uint8_t *node_internal_address = nullptr;
+            char *node_internal_address = nullptr;
 
             while (height >= 2)
             {
@@ -465,23 +465,23 @@ namespace ninedb::pbt
         {
             ZonePbtReader;
 
-            uint8_t *address = offset_to_address(storage->get_size() - detail::Footer::size_of());
+            char *address = offset_to_address(storage->get_size() - detail::Footer::size_of());
             detail::Footer::read(address, footer);
             footer.validate();
         }
 
-        uint8_t *offset_to_address(uint64_t offset) const
+        char *offset_to_address(uint64_t offset) const
         {
             ZonePbtReader;
 
-            return (uint8_t *)storage->get_address() + offset;
+            return reinterpret_cast<char *>(storage->get_address()) + offset;
         }
 
-        uint64_t address_to_offset(uint8_t *address) const
+        uint64_t address_to_offset(char *address) const
         {
             ZonePbtReader;
 
-            return (uint64_t)(address - (uint8_t *)storage->get_address());
+            return (uint64_t)(address - reinterpret_cast<char *>(storage->get_address()));
         }
     };
 }

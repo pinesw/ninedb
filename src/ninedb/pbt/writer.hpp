@@ -265,7 +265,7 @@ namespace ninedb::pbt
             ZonePbtWriter;
 
             storage->ensure_size(offset + detail::Footer::size_of());
-            uint8_t *address = (uint8_t *)storage->get_address() + offset;
+            char *address = reinterpret_cast<char *>(storage->get_address()) + offset;
             return detail::Footer::write(address, footer);
         }
 
@@ -273,7 +273,7 @@ namespace ninedb::pbt
         {
             ZonePbtWriter;
 
-            uint8_t *address = (uint8_t *)storage->get_address() + offset;
+            char *address = reinterpret_cast<char *>(storage->get_address()) + offset;
             storage->ensure_size(offset + node.size_of());
             return detail::NodeLeaf::write(address, node);
         }
@@ -282,7 +282,7 @@ namespace ninedb::pbt
         {
             ZonePbtWriter;
 
-            uint8_t *address = (uint8_t *)storage->get_address() + offset;
+            char *address = reinterpret_cast<char *>(storage->get_address()) + offset;
             storage->ensure_size(offset + node.size_of());
             return detail::NodeInternal::write(address, node);
         }
@@ -291,7 +291,7 @@ namespace ninedb::pbt
         {
             ZonePbtWriter;
 
-            uint8_t *address = (uint8_t *)storage->get_address() + offset;
+            char *address = reinterpret_cast<char *>(storage->get_address()) + offset;
             if (level <= 1)
             {
                 return read_node_leaf_metadata(address, values, first_key, last_key);
@@ -302,7 +302,7 @@ namespace ninedb::pbt
             }
         }
 
-        uint64_t read_node_leaf_metadata(uint8_t *address, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
+        uint64_t read_node_leaf_metadata(char *address, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
         {
             uint16_t num_children = detail::NodeLeaf::read_num_children(address);
             values.resize(num_children);
@@ -321,7 +321,7 @@ namespace ninedb::pbt
             return detail::NodeLeaf::size_of(address);
         }
 
-        uint64_t read_node_internal_metadata(uint8_t *address, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
+        uint64_t read_node_internal_metadata(char *address, std::vector<std::string_view> &values, std::string_view *first_key, std::string_view *last_key) const
         {
             uint16_t num_children = detail::NodeInternal::read_num_children(address);
             values.resize(num_children);

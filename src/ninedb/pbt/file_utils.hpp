@@ -23,7 +23,7 @@ namespace ninedb::pbt
         file.read(buffer.data(), detail::Footer::size_of());
         file.close();
 
-        uint8_t *buffer_ptr = (uint8_t *)buffer.data();
+        char *buffer_ptr = buffer.data();
         detail::Footer footer;
         detail::Footer::read(buffer_ptr, footer);
         footer.validate();
