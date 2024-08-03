@@ -19,18 +19,6 @@ namespace ninedb::pbt
          */
         uint64_t initial_pbt_size = 1 << 23;
 
-        // /**
-        //  * Whether or not to use LZ4 compression.
-        //  * Reduces the size of the PBT file, at a slight cost to read/write performance.
-        //  */
-        // bool enable_compression = false;
-
-        // /**
-        //  * Whether or not to use prefix encoding.
-        //  * Reduces the size of the PBT file, at a slight cost to read/write performance.
-        //  */
-        // bool enable_prefix_encoding = false;
-
         /**
          * A function that reduces a list of values to a single value.
          * This is used to reduce the values of a node's child entries to a single value.

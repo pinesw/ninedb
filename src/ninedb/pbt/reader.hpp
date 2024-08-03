@@ -58,8 +58,8 @@ namespace ninedb::pbt
                 return false;
             }
 
-            uint64_t entry_index;
             char *node_leaf_address;
+            uint64_t entry_index;
 
             if (!find<EXACT>(key, node_leaf_address, entry_index, nullptr))
             {
@@ -99,8 +99,8 @@ namespace ninedb::pbt
                 return false;
             }
 
-            uint64_t entry_index;
             char *node_leaf_address;
+            uint64_t entry_index;
 
             if (!find_index(index, node_leaf_address, entry_index))
             {
@@ -144,9 +144,9 @@ namespace ninedb::pbt
                 return end();
             }
 
+            char *node_leaf_address;
             uint64_t entry_index;
             uint64_t entry_start = 0;
-            char *node_leaf_address;
 
             if (!find<GREATER_OR_EQUAL>(key, node_leaf_address, entry_index, &entry_start))
             {
@@ -224,8 +224,8 @@ namespace ninedb::pbt
                 return end();
             }
 
-            uint64_t entry_index;
             char *node_leaf_address;
+            uint64_t entry_index;
 
             if (!find_index(index, node_leaf_address, entry_index))
             {
@@ -432,29 +432,14 @@ namespace ninedb::pbt
 
             for (uint64_t i = 0; i < num_children; i++)
             {
-                if (mode == EXACT)
+                if (mode == EXACT && detail::NodeLeaf::read_key(node_leaf_address, i).compare(key) == 0 || mode == GREATER_OR_EQUAL && detail::NodeLeaf::read_key(node_leaf_address, i).compare(key) >= 0)
                 {
-                    if (detail::NodeLeaf::read_key(node_leaf_address, i).compare(key) == 0)
+                    if (entry_start != nullptr)
                     {
-                        if (entry_start != nullptr)
-                        {
-                            *entry_start += i;
-                        }
-                        entry_index = i;
-                        return true;
+                        *entry_start += i;
                     }
-                }
-                if (mode == GREATER_OR_EQUAL)
-                {
-                    if (detail::NodeLeaf::read_key(node_leaf_address, i).compare(key) >= 0)
-                    {
-                        if (entry_start != nullptr)
-                        {
-                            *entry_start += i;
-                        }
-                        entry_index = i;
-                        return true;
-                    }
+                    entry_index = i;
+                    return true;
                 }
             }
 
