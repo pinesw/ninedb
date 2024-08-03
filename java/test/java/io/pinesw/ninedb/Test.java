@@ -68,7 +68,7 @@ public class Test {
 
         System.out.println("Testing HrDatabase");
         TestHrDb();
-        
+
         System.out.println("Testing KvDatabase");
         TestKvDb();
     }

@@ -1,27 +1,56 @@
-```bash
-conan install . -of java/build -pr:a profiles/profile_windows-2022_x64_Release.conf
+## Installation
 
-cmake -B java/build \
-  -S java \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DCONAN_PATH="C:\\Users\\Wouter\\workspace\\ninedb/java/build" \
-  -DJDK_HOME="C:\\Program Files\\AdoptOpenJDK\\jdk-11.0.9.101-hotspot" \
-  -DCMAKE_TOOLCHAIN_FILE="C:\\Users\\Wouter\\workspace\\ninedb/java/build/conan_toolchain.cmake"
+Central Sonatype page: https://central.sonatype.com/artifact/io.github.pinesw/ninedb
 
-cmake --build java/build --config Release
+### Maven
+
+Add to the dependencies section of your `pom.xml`:
+
+```xml
+<dependency>
+    <groupId>io.github.pinesw</groupId>
+    <artifactId>ninedb</artifactId>
+    <version>VERSION</version>
+</dependency>
 ```
 
-```bash
-cd java
+### Gradle
 
-javac -h src/main/cpp -cp src/main/java src/main/java/io/pinesw/ninedb/KvDatabase.java src/main/java/io/pinesw/ninedb/KvDbIterator.java src/main/java/io/pinesw/ninedb/HrDatabase.java
+Add to the dependencies section of your `build.gradle`:
 
-javac -cp "src/main/java;test/java" test/java/io/pinesw/ninedb/Test.java
-java -Djava.library.path=build -cp "src/main/java;test/java" io.pinesw.ninedb.Test
+```
+implementation group: 'io.github.pinesw', name: 'ninedb', version: 'VERSION'
 ```
 
-```bash
-cd java
+## Usage
 
-javap -cp src/main/java -s io.pinesw.ninedb.DbConfig
+### Example
+
+```java
+import io.pinesw.ninedb.DbConfig;
+import io.pinesw.ninedb.KvDatabase;
+import io.pinesw.ninedb.KvDbIterator;
+
+public class Main {
+
+    public static void main(String[] args) {
+        DbConfig config = new DbConfig();
+        
+        try (KvDatabase db = KvDatabase.open("data/my-database", config)) {
+            db.add("key_1".getBytes(), "value_1".getBytes());
+            db.add("key_2".getBytes(), "value_2".getBytes());
+            db.add("key_3".getBytes(), "value_3".getBytes());
+            db.flush();
+
+            try (KvDbIterator it = db.begin()) {
+                while (it.hasNext()) {
+                    byte[] key = it.getKey();
+                    byte[] value = it.getValue();
+                    System.out.println(new String(key) + " -> " + new String(value));
+                    it.next();
+                }
+            }
+        }
+    }
+}
 ```
