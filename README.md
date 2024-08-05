@@ -17,3 +17,11 @@ This is an embedded key-value data store with the following key features:
 
 - [Java README](java/README.md)
 - [JavaScript README](js/README.md)
+
+## PBT file format specification
+
+Specification for the file format used by the database ([link](spec/README.md)).
+
+## Database file format
+
+TODO
