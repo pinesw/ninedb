@@ -32,7 +32,7 @@ The following shorthands are used:
 |---|---|---|---|
 | `0` | Variable | [Leaf node](#leaf-node) | The first leaf node. |
 | `L(n)` | Variable | [Leaf node](#leaf-node) | The `n`<sup>th</sup> leaf node. |
-| `I(0) = L(N)` | Variable | [Intermediate node](#intermediate-node) | The first intermediate node, if there is any at all. |
+| `I(0) = L(N)` | Variable | [Intermediate node](#intermediate-node) | The first intermediate node, if there are any at all. |
 | `I(m)` | Variable | [Intermediate node](#intermediate-node) | The `m`<sup>th</sup> intermediate node, if there are any at all. |
 | `S - 42` | 42 | [Footer](#footer) | The footer containing the metadata. |
 
